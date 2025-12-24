@@ -1,0 +1,1920 @@
+! Skeleton table for the "ac_h2_swi_00000000_v01.cdf" CDF.
+! Generated: Thursday, 18-Dec-2025 12:09:49
+! CDF created/modified by CDF V3.9.1
+! Skeleton table created by CDF V3.8.1_0
+
+#header
+
+                       CDF NAME: ac_h2_swi_00000000_v01.cdf
+                  DATA ENCODING: NETWORK
+                       MAJORITY: COLUMN
+                         FORMAT: SINGLE
+
+! Variables  G.Attributes  V.Attributes  Records  Dims  Sizes
+! ---------  ------------  ------------  -------  ----  -----
+    47/0          28            25        23/z      1     3
+! CDF_COMPRESSION: None
+! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+! CDF_CHECKSUM: None
+! (Valid checksum: None, MD5)
+! CDF_LEAPSECONDLASTUPDATED: 20170101
+
+
+#GLOBALattributes
+
+! Attribute         Entry       Data
+! Name              Number      Type       Value
+! ---------         ------      ----       -----
+
+  "TITLE"               1:    CDF_CHAR     { "ACE> Solar Wind Ion " -
+                                             "Composition Spectrometer " -
+                                             "1.1" } .
+
+  "Project"             1:    CDF_CHAR     { "ACE>Advanced Composition " -
+                                             "ExplorerISTP>International" -
+                                             " Solar-Terrestrial Physics" } .
+
+  "Discipline"          1:    CDF_CHAR     { "Space " -
+                                             "Physics>Interplanetary " -
+                                             "Studies" } .
+
+  "Source_name"         1:    CDF_CHAR     { "AC>Advanced Composition " -
+                                             "Explorer" } .
+
+  "Data_type"           1:    CDF_CHAR     { "H2>1-hour Level 2 data" } .
+
+  "Descriptor"          1:    CDF_CHAR     { "SWICS_1.1>Solar Wind Ion " -
+                                             "Composition Spectrometer " -
+                                             "1.1" } .
+
+  "Data_version"        1:    CDF_CHAR     { "8" } .
+
+  "Generated_by"        1:    CDF_CHAR     { "ACE Science Center" } .
+
+  "Generation_date"     1:    CDF_CHAR     { "20150727" } .
+
+  "LINK_TEXT"           1:    CDF_CHAR     { "Release notes and other " -
+                                             "info available at" } .
+
+  "LINK_TITLE"          1:    CDF_CHAR     { "the ACE Science Center  " -
+                                             "Level 2 Data website" } .
+
+  "HTTP_LINK"           1:    CDF_CHAR     { "https://izw1.caltech.edu/A" -
+                                             "CE/ASC/level2/index.html" } .
+
+  "TEXT"                1:    CDF_CHAR     { "SWICS 1.1 - The Solar Wind" -
+                                             " Ion Composition " -
+                                             "Spectrometer prior to " -
+                                             "August 23 2011 - " }
+                        2:    CDF_CHAR     { "determines uniquely the " -
+                                             "chemical and ionic-charge " -
+                                             "composition of the solar " -
+                                             "wind, " }
+                        3:    CDF_CHAR     { "the temperatures and mean " -
+                                             "speeds of major solar wind" -
+                                             " ions, at all speeds " }
+                        4:    CDF_CHAR     { "above 300 km/s (protons) " -
+                                             "and 170 km/s  (Fe+16), and" -
+                                             " resolves H and He " -
+                                             "isotopes " }
+                        5:    CDF_CHAR     { "of solar and interstellar " -
+                                             "sources. SWICS 1.1 " -
+                                             "measures the distribution " -
+                                             "functions " }
+                        6:    CDF_CHAR     { "of the interstellar cloud " -
+                                             "and dust cloud pickup ions" -
+                                             " up to energies of 100 " -
+                                             "keV/e." }
+                        7:    CDF_CHAR     { "For more information about" -
+                                             " the SWICS instrument, " -
+                                             "visit the SWICS Home Page " -
+                                             "at " }
+                        8:    CDF_CHAR     { "http://solar-heliospheric." -
+                                             "engin.umich.edu/ace." }
+                        9:    CDF_CHAR     { "The quality of ACE level 2" -
+                                             " data is such that it is " -
+                                             "suitable for serious " }
+                       10:    CDF_CHAR     { "scientific study.  " -
+                                             "However, to avoid " -
+                                             "confusion and " -
+                                             "misunderstanding, it " }
+                       11:    CDF_CHAR     { "is recommended that users " -
+                                             "consult with the " -
+                                             "appropriate ACE team " -
+                                             "members" }
+                       12:    CDF_CHAR     { "before publishing work " -
+                                             "derived from the data. The" -
+                                             " ACE team has worked " }
+                       13:    CDF_CHAR     { "hard to ensure that the " -
+                                             "level 2 data are free from" -
+                                             " errors, but the team " }
+                       14:    CDF_CHAR     { "cannot accept " -
+                                             "responsibility for " -
+                                             "erroneous data, or for " -
+                                             "misunderstandings " }
+                       15:    CDF_CHAR     { "about how the data may be " -
+                                             "used. This is especially " -
+                                             "true if the appropriate " }
+                       16:    CDF_CHAR     { "ACE team members are not " -
+                                             "consulted before " -
+                                             "publication. At the very " }
+                       17:    CDF_CHAR     { "least, preprints should be" -
+                                             " forwarded to the ACE team" -
+                                             " before publication." } .
+
+  "MODS"                1:    CDF_CHAR     { "Initial Release 11/08/05 " } .
+
+  "ADID_ref"            1:    CDF_CHAR     { "NSSD0327" } .
+
+  "Logical_file_id"     1:    CDF_CHAR     { "AC_H2_SWI_19980913_V08" } .
+
+  "Logical_source"      1:    CDF_CHAR     { "AC_H2_SWI" } .
+
+  "Logical_source_description"
+                        1:    CDF_CHAR     { "ACE/SWICS 1.1 Solar Wind " -
+                                             "1-Hour Level 2 Data" } .
+
+  "PI_name"             1:    CDF_CHAR     { "G. Gloeckler" } .
+
+  "PI_affiliation"      1:    CDF_CHAR     { "University of Maryland" } .
+
+  "Mission_group"       1:    CDF_CHAR     { "ACE" } .
+
+  "Instrument_type"     1:    CDF_CHAR     { "Plasma and Solar Wind" } .
+
+  "Time_resolution"     1:    CDF_CHAR     { "1 hour" } .
+
+  "Web_site"            1:    CDF_CHAR     { "http://www.srl.caltech.edu" -
+                                             "/ACE/" } .
+
+  "Acknowledgement"     1:    CDF_CHAR     { "Please acknowledge the " -
+                                             "Principal " }
+                        2:    CDF_CHAR     { "Investigator, G. Gloeckler" -
+                                             " of " }
+                        3:    CDF_CHAR     { "University of Maryland" } .
+
+  "Rules_of_use"        1:    CDF_CHAR     { "See the rules of use " -
+                                             "available from the ACE " }
+                        2:    CDF_CHAR     { "Science Center at: " }
+                        3:    CDF_CHAR     { "http://www.srl.caltech.edu" -
+                                             "/ACE/ASC/level2/policy_lvl" -
+                                             "2.html" } .
+
+  "spase_DatasetResourceID"
+                        1:    CDF_CHAR     { "spase://NASA/NumericalData" -
+                                             "/ACE/SWICS_SWIMS/L2/PT1H" } .
+
+  "DOI"                 1:    CDF_CHAR     { "https://doi.org/10.48322/p" -
+                                             "7gt-yh33" } .
+
+
+#VARIABLEattributes
+
+  "FIELDNAM"
+  "VALIDMIN"
+  "VALIDMAX"
+  "SCALEMIN"
+  "SCALEMAX"
+  "LABLAXIS"
+  "UNITS"
+  "MONOTON"
+  "VAR_TYPE"
+  "FORMAT"
+  "FORM_PTR"
+  "LABL_PTR_1"
+  "UNIT_PTR"
+  "FILLVAL"
+  "DEPEND_0"
+  "DEPEND_1"
+  "DICT_KEY"
+  "CATDESC"
+  "DELTA_PLUS_VAR"
+  "DELTA_MINUS_VAR"
+  "AVG_TYPE"
+  "DISPLAY_TYPE"
+  "VAR_NOTES"
+  "SCALETYP"
+  "SCAL_PTR"
+
+
+#variables
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "Epoch"         CDF_EPOCH      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: 01-Jan-0000 00:00:00.000
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Time" }
+    "VALIDMIN"    CDF_EPOCH    { 01-Jan-1996 00:00:00.000 }
+    "VALIDMAX"    CDF_EPOCH    { 01-Jan-2020 00:00:00.000 }
+    "SCALEMIN"    CDF_EPOCH    { 01-Jan-1996 00:00:00.000 }
+    "SCALEMAX"    CDF_EPOCH    { 01-Jan-2020 00:00:00.000 }
+    "LABLAXIS"    CDF_CHAR     { "Epoch" }
+    "UNITS"       CDF_CHAR     { "ms" }
+    "MONOTON"     CDF_CHAR     { "INCREASE" }
+    "VAR_TYPE"    CDF_CHAR     { "support_data" }
+    "FORMAT"      CDF_CHAR     { "E14.8" }
+    "FILLVAL"     CDF_REAL8    { -1.0e+31 }
+    "DICT_KEY"    CDF_CHAR     { "time>epoch" }
+    "CATDESC"     CDF_CHAR     { "Time, beginning of interval" }
+    "DELTA_PLUS_VAR"
+                  CDF_CHAR     { "Delta_time" }
+    "DELTA_MINUS_VAR"
+                  CDF_CHAR     { "Delta_time" }
+    "AVG_TYPE"    CDF_CHAR     { "standard" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { " " }
+    "VAR_NOTES"   CDF_CHAR     { " " }
+    "SCALETYP"    CDF_CHAR     { "linear" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "Time_PB5"      CDF_INT4       1         T         T
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Time PB5" }
+    "VALIDMIN"    CDF_INT4     { 1997, 237, 0 }
+    "VALIDMAX"    CDF_INT4     { 2020, 366, 0 }
+    "SCALEMIN"    CDF_INT4     { 1997, 237, 0 }
+    "SCALEMAX"    CDF_INT4     { 2020, 366, 0 }
+    "MONOTON"     CDF_CHAR     { "INCREASE" }
+    "VAR_TYPE"    CDF_CHAR     { "support_data" }
+    "FORM_PTR"    CDF_CHAR     { "format_time" }
+    "LABL_PTR_1"  CDF_CHAR     { "label_time" }
+    "UNIT_PTR"    CDF_CHAR     { "unit_time" }
+    "FILLVAL"     CDF_INT4     { -2147483648 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DEPEND_1"    CDF_CHAR     { "unit_time" }
+    "DICT_KEY"    CDF_CHAR     { "time>pb5" }
+    "CATDESC"     CDF_CHAR     { "Time of observation in Year, Day, & " -
+                                 "milliseconds (1 hour)" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "unit_time"     CDF_CHAR       4         F         T
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_BLOCKINGFACTOR: 1
+  ! VAR_PADVALUE: " "
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Units for Time_PB5" }
+    "VAR_TYPE"    CDF_CHAR     { "metadata" }
+    "FORMAT"      CDF_CHAR     { "a5" }
+    "DICT_KEY"    CDF_CHAR     { "label" }
+    "CATDESC"     CDF_CHAR     { "Units for Time_PB5" } .
+
+  ! NRV values follow...
+
+    [1] = { "year" }
+    [2] = { "day " }
+    [3] = { "msec" }
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "label_time"    CDF_CHAR      27         F         T
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_BLOCKINGFACTOR: 1
+  ! VAR_PADVALUE: " "
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Label for Time_PB5" }
+    "VAR_TYPE"    CDF_CHAR     { "metadata" }
+    "FORMAT"      CDF_CHAR     { "a28" }
+    "DICT_KEY"    CDF_CHAR     { "label" }
+    "CATDESC"     CDF_CHAR     { "Label for Time_PB5" } .
+
+  ! NRV values follow...
+
+    [1] = { "Year                       " }
+    [2] = { "Day of Year (Jan 1 = Day 1)" }
+    [3] = { "Elapsed milliseconds of day" }
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "format_time"   CDF_CHAR       2         F         T
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_BLOCKINGFACTOR: 1
+  ! VAR_PADVALUE: " "
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Format for Time_PB5" }
+    "VAR_TYPE"    CDF_CHAR     { "metadata" }
+    "FORMAT"      CDF_CHAR     { "a3" }
+    "DICT_KEY"    CDF_CHAR     { "label" }
+    "CATDESC"     CDF_CHAR     { "Format for Time_PB5" } .
+
+  ! NRV values follow...
+
+    [1] = { "I4" }
+    [2] = { "I3" }
+    [3] = { "I8" }
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "nHe2"          CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "He++ density" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 200.0000 }
+    "LABLAXIS"    CDF_CHAR     { "He++_density" }
+    "UNITS"       CDF_CHAR     { "#/cm^3" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "density>number" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind He++ Number Density, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "nHe2 is the number density of He++ " -
+                                 "ions in the solar wind, in #/cm^3" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "nHe2_err"      CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "He++ density_err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 200.0000 }
+    "LABLAXIS"    CDF_CHAR     { "He++_density_err" }
+    "UNITS"       CDF_CHAR     { "#/cm^3" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "density>number_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "He++ Number Density statistical " -
+                                 "uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "nHe2_err is the statistical " -
+                                 "uncertainty in the number density of " -
+                                 "He++ ions in the solar wind, in #/cm^3" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vHe2"          CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind He++ Speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "He++_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind He++ speed, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vHe2 is the mean He++ ion speed in the" -
+                                 " solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vthHe2"        CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind He++ Thermal speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "He++_Thermal_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>thermal_speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind He++ Thermal speed, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vthHe2 is the thermal speed of He++ in" -
+                                 " the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "He_qual"       CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "He quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_He" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "flag>quality" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for the helium speed and " -
+                                 "density data" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "He_qual is the quality flag for the " -
+                                 "helium speed and density data. 0: good" -
+                                 " quality. Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vC5"           CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind C+5 speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "C+5_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind Carbon+5 speed, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vC5 is the mean Carbon+5 ion speed in " -
+                                 "the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vthC5"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind C+5 Thermal speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "C+5_Thermal_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>thermal_speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind Carbon+5 Thermal speed, " -
+                                 "scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vthC5 is the thermal speed of Carbon+5" -
+                                 " in the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C5_qual"       CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+5 quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_C+5" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "flag>quality" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for the C+5 speed and " -
+                                 "thermal speed data" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C5_qual is the quality flag for the " -
+                                 "C+5 speed and thermal speed data. 0: " -
+                                 "good quality. Non-zero: see release " -
+                                 "notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vO6"           CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind O+6 speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "O+6_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind Oxygen+6 speed, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vO6 is the mean Oxygen+6 ion speed in " -
+                                 "the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vthO6"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind O+6 Thermal speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "O+6_Thermal_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>thermal_speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind Oxygen+6 Thermal speed, " -
+                                 "scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vthO6 is the thermal speed of Oxygen+6" -
+                                 " in the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "O6_qual"       CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "O+6 quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_O+6" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "flag>quality" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for the O+6 speed and " -
+                                 "thermal speed data" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "O6_qual is the quality flag for the " -
+                                 "O+6 speed and thermal speed data. 0: " -
+                                 "good quality. Non-zero: see release " -
+                                 "notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vFe10"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind Fe+10 speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "Fe+10_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind Iron+10 speed, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vFe10 is the mean Fe+10 ion speed in " -
+                                 "the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "vthFe10"       CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind Fe+10 Thermal speed" }
+    "VALIDMIN"    CDF_REAL4    { 0.00 }
+    "VALIDMAX"    CDF_REAL4    { 2000.00 }
+    "LABLAXIS"    CDF_CHAR     { "Fe+10_Thermal_Speed" }
+    "UNITS"       CDF_CHAR     { "km/s" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f8.2" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "velocity>thermal_speed" }
+    "CATDESC"     CDF_CHAR     { "Solar Wind Iron+10 Thermal speed, scalar" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "vthFe10 is the thermal speed of Fe+10 " -
+                                 "in the solar wind, in km/s." } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "Fe10_qual"     CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Fe+10 quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_Fe+10" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "flag>quality" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for the Fe+10 speed and " -
+                                 "thermal speed data" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "Fe10_qual is the quality flag for the " -
+                                 "Fe+10 speed and thermal speed data. 0:" -
+                                 " good quality. Non-zero: see release " -
+                                 "notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C6to4"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+6/C+4 Ratio" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 100.0000 }
+    "LABLAXIS"    CDF_CHAR     { "C+6/C+4_Ratio" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio" }
+    "CATDESC"     CDF_CHAR     { "C+6/C+4 Solar Wind charge_state Ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C6to4 is the C+6/C+4 Solar Wind " -
+                                 "charge_state Ratio" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C6to4_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+6/C+4 Ratio Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 100.0000 }
+    "LABLAXIS"    CDF_CHAR     { "C+6/C+4_Ratio_Err" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "C+6/C+4 Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C6to4_err is the C+6/C+4 statistical " -
+                                 "uncertainty" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C6to4_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+6/C+4 Quality Flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_C+6/C+4" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for C+6/C+4 Solar Wind " -
+                                 "charge_state Ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C6to4_qual is the quality flag for the" -
+                                 " C+6/C+4 ratio. 0: good quality. " -
+                                 "Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C6to5"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+6/C+5 Ratio" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 100.0000 }
+    "LABLAXIS"    CDF_CHAR     { "C+6/C+5_Ratio" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio" }
+    "CATDESC"     CDF_CHAR     { "C+6/C+5 Solar Wind charge_state Ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C6to5 is the C+6/C+5 Solar Wind " -
+                                 "charge_state Ratio" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C6to5_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+6/C+5 Ratio Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 100.0000 }
+    "LABLAXIS"    CDF_CHAR     { "C+6/C+5_Ratio_Err" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "C+6/C+5 Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C6to5_err is the C+6/C+5 statistical " -
+                                 "uncertainty" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "C6to5_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "C+6/C+5 Quality Flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_C+6/C+5" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for C+6/C+5 Solar Wind " -
+                                 "charge_state Ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "C6to5_qual is the quality flag for the" -
+                                 " C+6/C+5 ratio. 0: good quality. " -
+                                 "Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "O7to6"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "O+7/O+6 Ratio" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 100.0000 }
+    "LABLAXIS"    CDF_CHAR     { "O+7/O+6_Ratio" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio" }
+    "CATDESC"     CDF_CHAR     { "O+7/O+6 Solar Wind charge_state Ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "O7to6 is the O+7/O+6 Solar Wind " -
+                                 "charge_state Ratio" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "O7to6_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "O+7/O+6 Ratio Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 100.0000 }
+    "LABLAXIS"    CDF_CHAR     { "O+7/O+6_Ratio_Err" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "O+7/O+6 Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "O7to6_err is the O+7/O+6 statistical " -
+                                 "uncertainty" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "O7to6_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "O+7/O+6 Quality Flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_O+7/O+6" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>ratio_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for O+7/O+6 Solar Wind " -
+                                 "charge_state Ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "O7to6_qual is the quality flag for the" -
+                                 " O+7/O+6 ratio. 0: good quality. " -
+                                 "Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqC"          CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Carbon" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 6.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_C" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average" }
+    "CATDESC"     CDF_CHAR     { "Carbon Solar Wind average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqC is the Carbon Solar Wind average " -
+                                 "charge state" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqC_err"      CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Carbon Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 6.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_C_Err" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "Carbon average charge state " -
+                                 "Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqC is the C <Q-state> statistical " -
+                                 "uncertainty" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqC_qual"     CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Carbon quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_<Q>_C" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for Carbon Solar Wind " -
+                                 "average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqC_qual is the quality flag for the " -
+                                 "avqC average charge state. 0: good " -
+                                 "quality. Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqO"          CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Oxygen" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 8.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_O" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average" }
+    "CATDESC"     CDF_CHAR     { "Oxygen Solar Wind average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqO is the Oxygen Solar Wind average " -
+                                 "charge state" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqO_err"      CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Oxygen Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 8.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_O_Err" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "Oxygen average charge state " -
+                                 "Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqO is the O <Q-state> statistical " -
+                                 "uncertainty" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqO_qual"     CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Oxygen quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_<Q>_O" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for Oxygen Solar Wind " -
+                                 "average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqO_qual is the quality flag for the " -
+                                 "avqO average charge state. 0: good " -
+                                 "quality. Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqMg"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Magnesium" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 12.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_Mg" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average" }
+    "CATDESC"     CDF_CHAR     { "Magnesium Solar Wind average charge " -
+                                 "state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqMg is the Magnesium Solar Wind " -
+                                 "average charge state" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqMg_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Magnesium Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 12.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_Mg_Err" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "Magnesium average charge state " -
+                                 "Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqMg is the Mg <Q-state> statistical " -
+                                 "uncertainty" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqMg_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Magnesium quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_<Q>_Mg" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for Magnesium Solar Wind " -
+                                 "average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqMg_qual is the quality flag for the" -
+                                 " avqMg average charge state. 0: good " -
+                                 "quality. Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqSi"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Silicon" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 14.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_Si" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average" }
+    "CATDESC"     CDF_CHAR     { "Silicon Solar Wind average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqSi is the Silicon Solar Wind " -
+                                 "average charge state" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqSi_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Silicon Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 14.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_Si_Err" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "Silicon average charge state " -
+                                 "Statistical Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqSi is the Si <Q-state> statistical " -
+                                 "uncertainty" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqSi_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Silicon quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_<Q>_Si" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for Silicon Solar Wind " -
+                                 "average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqSi_qual is the quality flag for the" -
+                                 " avqSi average charge state. 0: good " -
+                                 "quality. Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqFe"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Iron" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 26.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_Fe" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average" }
+    "CATDESC"     CDF_CHAR     { "Iron Solar Wind average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqFe is the Iron Solar Wind average " -
+                                 "charge state" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqFe_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Iron Err" }
+    "VALIDMIN"    CDF_REAL4    { 0.0000 }
+    "VALIDMAX"    CDF_REAL4    { 26.0000 }
+    "LABLAXIS"    CDF_CHAR     { "<Q>_Fe_Err" }
+    "UNITS"       CDF_CHAR     { "ionic charge" }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "Iron average charge state Statistical " -
+                                 "Uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqFe is the Fe <Q-state> statistical " -
+                                 "uncertainty" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "avqFe_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "<Q> Iron quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_<Q>_Fe" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "charge_state>average_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality flag for Iron Solar Wind " -
+                                 "average charge state" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "avqFe_qual is the quality flag for the" -
+                                 " avqFe average charge state. 0: good " -
+                                 "quality. Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "FetoO"         CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Fe/O elemental abundance ratio" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 10 }
+    "LABLAXIS"    CDF_CHAR     { "Fe/O_Ratio" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "elemental_abundance>ratio" }
+    "CATDESC"     CDF_CHAR     { "Fe/O Solar Wind elemental abundance " -
+                                 "ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "FetoO is the Fe/O Solar Wind elemental" -
+                                 " abundance ratio" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "FetoO_err"     CDF_REAL4      1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -1.0e+30
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Fe/O statistical uncertainty" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 10 }
+    "LABLAXIS"    CDF_CHAR     { "Fe/O_err" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "f9.4" }
+    "FILLVAL"     CDF_REAL4    { -1.0e+31 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "elemental_abundance>ratio_uncertainty" }
+    "CATDESC"     CDF_CHAR     { "Fe/O statistical uncertainty" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "FetoO_err is the Fe/O Solar Wind " -
+                                 "elemental abundance ratio statistical " -
+                                 "uncertainty" }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "FetoO_qual"    CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Fe/O quality flag" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 16 }
+    "LABLAXIS"    CDF_CHAR     { "QF_Fe/O" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "elemental_abundance>ratio_flag" }
+    "CATDESC"     CDF_CHAR     { "Quality Flag for Fe/O Solar Wind " -
+                                 "elemental abundance ratio" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "FetoO_qual is the quality flag for the" -
+                                 " Fe/O ratio. 0: good quality. " -
+                                 "Non-zero: see release notes." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+! Variable          Data      Number    Record   Dimension
+! Name              Type     Elements  Variance  Variances
+! --------          ----     --------  --------  ---------
+
+  "SW_type"       CDF_INT4       1         T         F
+
+  ! VAR_COMPRESSION: None
+  ! (Valid compression: None, GZIP.1-9, RLE.0, HUFF.0, AHUFF.0)
+  ! VAR_SPARSERECORDS: None
+  ! (Valid sparserecords: None, sRecords.PAD, sRecords.PREV)
+  ! VAR_PADVALUE: -2147483647
+
+  ! Attribute       Data
+  ! Name            Type       Value
+  ! --------        ----       -----
+
+    "FIELDNAM"    CDF_CHAR     { "Solar Wind Type" }
+    "VALIDMIN"    CDF_INT4     { 0 }
+    "VALIDMAX"    CDF_INT4     { 3 }
+    "LABLAXIS"    CDF_CHAR     { "SW_type" }
+    "UNITS"       CDF_CHAR     { " " }
+    "VAR_TYPE"    CDF_CHAR     { "data" }
+    "FORMAT"      CDF_CHAR     { "I2" }
+    "FILLVAL"     CDF_INT4     { -1 }
+    "DEPEND_0"    CDF_CHAR     { "Epoch" }
+    "DICT_KEY"    CDF_CHAR     { "flag>number" }
+    "CATDESC"     CDF_CHAR     { "SW type. 0:streamer wind 1:coronal " -
+                                 "hole 2:CME 3:unidentified" }
+    "DISPLAY_TYPE"
+                  CDF_CHAR     { "time_series" }
+    "VAR_NOTES"   CDF_CHAR     { "SW_type is a rough classification of " -
+                                 "solar wind type based on functions of " -
+                                 "O7+/O6+ vs proton speed (Zhou 2008). " -
+                                 "0: Streamer Wind. 1: Coronal Hole " -
+                                 "Wind. 2: Coronal Mass Ejection. 3: " -
+                                 "Unidentified." }
+    "SCALETYP"    CDF_CHAR     { "LINEAR" } .
+
+  ! RV values were not requested.
+
+
+#zVariables
+
+! No zVariables.
+
+
+#end
