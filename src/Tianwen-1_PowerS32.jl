@@ -9,7 +9,7 @@ using Interpolations # interpolation
 using DSP
 using LinearAlgebra
 using Wavelets
-include("TCWavelet.jl")
+include("scripts/TCWavelet.jl")
 const Rm = 3390.0  #km
 #Edberg, N. J. T., M. Lester, S. W. H. Cowley, and A. I. Eriksson (2008), Statistical analysis of the location of the Martian magnetic pileup boundary and bow shock and the influence of crustal magnetic fields, J. Geophys. Res., 113, A08206, doi:10.1029/2008JA013096.
 "bow-shock model"
@@ -53,7 +53,8 @@ ryzmp = [ryzmp[ind]; -reverse(ryzmp[ind])]
 
 
 # read data 
-datapath2c32hz = "E:/Acode/JuliaCode/Tianwen/Data/32Hz/"
+project_root = dirname(@__DIR__)
+datapath2c32hz = joinpath(project_root, "Data", "32Hz")
 date = DateTime(2022, 10, 24, 00, 00, 00) .+ Dates.Day(1) .* range(0, 10)
 #date = DateTime(2021, 11, 16, 00, 00, 00) .+ Dates.Day(1) .* range(0, 0)
 #20220630
@@ -61,7 +62,8 @@ datestr = Dates.format.(date, "yyyymmdd")
 
 for (dts, dte) in zip(datestr, date)
     println("Reading file: ")
-    file2c32hz = datapath2c32hz * "TW1_MOMAG_MSO_32Hz_" * dts * "_2C_v03.dat"
+    filename = "TW1_MOMAG_MSO_32Hz_" * dts * "_2C_v03.dat"
+    file2c32hz = joinpath(datapath2c32hz, filename)
     println(file2c32hz)
     global mag2c32hz = identity.(DataFrame(readdlm(file2c32hz, skipstart=19), :auto))
     name = ["Time", "Sampling_Rate", "X_MSO", "Y_MSO", "Z_MSO", "Probe_Position_X_MSO", "Probe_Position_Y_MSO", "Probe_Position_Z_MSO", "Roll", "Pitch", "Yaw",  "Quality_Flags"]

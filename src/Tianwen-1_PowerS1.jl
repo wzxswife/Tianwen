@@ -53,7 +53,8 @@ ryzmp = [ryzmp[ind]; -reverse(ryzmp[ind])]
 
 
 # read data 
-datapath2c1hz = "E:/Acode/JuliaCode/Tianwen/Data/1Hz/"
+project_root = dirname(@__DIR__)
+datapath2c1hz = joinpath(project_root, "Data", "1Hz")
 # date = DateTime(2021, 11, 16, 00, 00, 00) .+ Dates.Day(1) .* range(0, 226)
 date = DateTime(2021, 12, 01, 00, 00, 00) .+ Dates.Day(1) .* range(0, 1)
 #date = DateTime(2021, 11, 16, 00, 00, 00) .+ Dates.Day(1) .* range(0, 0)
@@ -61,7 +62,8 @@ date = DateTime(2021, 12, 01, 00, 00, 00) .+ Dates.Day(1) .* range(0, 1)
 datestr = Dates.format.(date, "yyyymmdd")
 
 for (dts, dte) in zip(datestr, date)
-    file2c1hz = datapath2c1hz * "TW1_MOMAG_MSO_01Hz_" * dts * "_2C_v03.dat"
+    filename = "TW1_MOMAG_MSO_01Hz_" * dts * "_2C_v03.dat"
+    file2c1hz = joinpath(datapath2c1hz, filename)
     println(file2c1hz)
     global mag2c1hz = identity.(DataFrame(readdlm(file2c1hz, skipstart=19), :auto))
     name = ["Time", "Sampling_Rate", "X_MSO", "Y_MSO", "Z_MSO", "Probe_Position_X_MSO", "Probe_Position_Y_MSO", "Probe_Position_Z_MSO", "Roll", "Pitch", "Yaw",  "Quality_Flags"]
