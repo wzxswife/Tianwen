@@ -19,7 +19,7 @@ const RAD = π / 180
 
 # -------------------------Export parts-------------------------
 export sta_heatmap, STA_2d_slip, SWEA_PAD_heatmap, WaveSpactra_heatmap, Orbit, PAD_slice, PAD_slice_polar, PAD_slice_velocity
-export time2x, time_ticks, x_ticks
+export time2x, time_ticks, x_ticks, ion_energy2v
 function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     # 转接vspan函数,y需要为bool值
     segments1 = []
@@ -432,14 +432,15 @@ function VDF_2d_slip(ax,velocity, data;
     end
     return ax
 end
+function ion_energy2v(energy,AMU) # 离子能量对应速度(相对论),输入eV, 返回km/s
+    E0 = 938313.53 * AMU  # 质子静止能量 MeV
+    γ= energy*1e-3/E0 + 1.0
+    β=sqrt(1.0 - 1.0 / γ^2)
+    v = β * 3e5
+    return v
+end
 function VDF_2d_mask(ax,range_data;rot=rot,vsc=vsc,backgroundcolor=:gray80)
-    function ion_energy2v(energy,AMU) # 离子子能量对应速度(相对论),输入eV, 返回km/s
-        E0 = 938313.53 * AMU  # 质子静止能量 MeV
-        γ= energy*1e-3/E0 + 1.0
-        β=sqrt(1.0 - 1.0 / γ^2)
-        v = β * 3e5
-        return v
-    end
+
     function get_triangle_mesh(r_bounds, theta_bounds, phi_bounds; n_steps=12)
         triangles = [] # 每个元素都是一个包含3个顶点的数组
         r1, r2 = r_bounds
