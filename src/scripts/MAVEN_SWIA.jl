@@ -11,17 +11,21 @@ using CommonDataFormat
 # -------------------------Export parts-------------------------
 # export static_c6_mass_mean,static_c6_energy_mean
 # export static_rotation,static_slip,static_slip_2_V,sta_v_4d
-# export ion_energy2v,ion_v2energy
+export ion_energy2v,ion_v2energy
+export get_3dc!,get_3df!
+export v_3d,j_3d,n_3d
 export sphere2xyz_for_SWIA
+
 #---------------------------初始化-------------------------------- 由于SWIA的糟糕数据,需要对其读取后进行初始化处理
-function get_3dc!(dat;quat_data = nothing)#projects/maven/swia/mvn_swia_get_3dc.pro,直接处理dat,需要SWIA coarse data 3D
+function get_3dc!(dat;quat_data = nothing)
+    #projects/maven/swia/mvn_swia_get_3dc.pro,直接处理dat,需要SWIA coarse data 3D
     local ntime = length(dat[:epoch])
     local nanode = 16
     local ndeflect = 4
     local nbins = 64
     local nenergy = 48
 
-    local energy= reshape(dat[:energy_coarse],1,48)
+    local energy = reshape(dat[:energy_coarse],1,48)
     local denergy = energy .* 0.15 #dat[:de_over_e_coarse]
 
     local phi = dat[:phi_coarse]
@@ -64,7 +68,7 @@ function get_3dc!(dat;quat_data = nothing)#projects/maven/swia/mvn_swia_get_3dc.
     dat[:nphi] = nanode
     dat[:phi] = phi
     dat[:dphi] = dphi
-    
+
     dat[:domega] = domega
     dat[:mass] = 5.68566e-6*1836.0
 
@@ -90,7 +94,8 @@ function get_3dc!(dat;quat_data = nothing)#projects/maven/swia/mvn_swia_get_3dc.
     return dat
     # [:filename, :theta_coarse, :theta_atten_coarse, :g_phi_atten_coarse, :g_theta_atten_coarse, :g_phi_coarse, :energy_coarse, :time_unix, :time_met, :diff_en_fluxes, :atten_state, :g_theta_coarse, :counts, :phi_coarse, :data_load_flag, :dindex, :num_accum, :grouping, :epoch]
 end
-function get_3df!(dat;quat_data = nothing) #projects/maven/swia/mvn_swia_get_3df.pro,直接处理dat,需要SWIA fine data 3D
+function get_3df!(dat;quat_data = nothing) 
+    #projects/maven/swia/mvn_swia_get_3df.pro,直接处理dat,需要SWIA fine data 3D
     # keys(dat) = [:geom_factor, :filename, :theta_fine, :theta_atten_fine, :time_unix, :time_met, :diff_en_fluxes, :g_theta_fine, :atten_state, :estep_first, :phi_fine, :g_phi_fine, :eindex, :num_dists, :energy_fine, :dstep_first, :counts, :data_load_flag, :g_phi_atten_fine, :accum_time_fine, :g_theta_atten_fine, :dindex, :grouping, :de_over_e_fine, :epoch]
     local ntime = length(dat[:epoch])
     local nanode = 10
@@ -177,7 +182,8 @@ function get_3df!(dat;quat_data = nothing) #projects/maven/swia/mvn_swia_get_3df
     return dat
     # [:filename, :theta_coarse, :theta_atten_coarse, :g_phi_atten_coarse, :g_theta_atten_coarse, :g_phi_coarse, :energy_coarse, :time_unix, :time_met, :diff_en_fluxes, :atten_state, :g_theta_coarse, :counts, :phi_coarse, :data_load_flag, :dindex, :num_accum, :grouping, :epoch]
 end
-function n_3d(dat,time_ind;energy_range=[0.1,1e8])# 计算SWIA的密度, SWIA假设所有离子为质子,需要get_3d系列
+function n_3d(dat,time_ind;energy_range=[0.1,1e8])
+    # 计算SWIA的密度, SWIA假设所有离子为质子,需要get_3d系列
     # general/science/n_3d.pro // projects/maven/swia/mvn_swia_get_3dc.pro 参考
 
     local ntime_local = length(time_ind)
@@ -215,7 +221,8 @@ function n_3d(dat,time_ind;energy_range=[0.1,1e8])# 计算SWIA的密度, SWIA假
     density = Const*sum(denergy.*(energy.^(-1.5)).*sumdata,dims=2)[:,1]
     return density
 end
-function j_3d(dat,time_ind;energy_range=[0.1,1e8])# 计算SWIA的通量, SWIA假设所有离子为质子,需要SWIA coarse data 3D, 
+function j_3d(dat,time_ind;energy_range=[0.1,1e8])\
+    # 计算SWIA的通量, SWIA假设所有离子为质子,需要SWIA coarse data 3D, 
     # general/science/j_3d.pro // projects/maven/swia/mvn_swia_get_3dc.pro 参考, 单位cm^-2s^-1
     local ntime_local = length(time_ind)
     # ntime = dat[:ntime]  
@@ -255,7 +262,8 @@ function j_3d(dat,time_ind;energy_range=[0.1,1e8])# 计算SWIA的通量, SWIA假
     flux3dz = sum(dnrg.*sumdataz,dims=2)[:,1]
     return hcat(flux3dx,flux3dy,flux3dz)
 end
-function v_3d(dat,time_ind;energy_range=[0.1,1e8])# 计算SWIA的速度, SWIA假设所有离子为质子,需要SWIA coarse data 3D, 经过检验，可以正常工作
+function v_3d(dat,time_ind;energy_range=[0.1,1e8])
+    # 计算SWIA的速度, SWIA假设所有离子为质子,需要SWIA coarse data 3D, 经过检验，可以正常工作
     # general/science/v_3d.pro // projects/maven/swia/mvn_swia_get_3dc.pro 参考，已经经过检验，速度单位km/s
     local ntime_local = length(time_ind)
     # ntime = dat[:ntime]  
@@ -300,7 +308,8 @@ function v_3d(dat,time_ind;energy_range=[0.1,1e8])# 计算SWIA的速度, SWIA假
     vel = 1.e-5*flux./density
     return vel,flux,density
 end
-function n_1d(dat0;energy_range=[0.1,1e8],time_ind=1:10)# 计算SWIA的密度, SWIA假设所有离子为质子,需要SWIA svy spec data 3D
+function n_1d(dat0;energy_range=[0.1,1e8],time_ind=1:10)
+    # 计算SWIA的密度, SWIA假设所有离子为质子,需要SWIA svy spec data 3D
     local dat= deepcopy(dat0)
     flux = dat[:spectra_diff_en_fluxes][time_ind,:]
     energy = reshape(dat[:energy_spectra],1,48)
@@ -345,10 +354,10 @@ function rotate_vector_with_Martrix(in_data,Rotation_Martrix) # inv
     return out_data
 end
 function sphere2xyz_for_SWIA(r,θ,ϕ) #general/science/sphere_to_cart.pro
-    local ct = cosd(θ)
-    x = r * ct *  cosd(ϕ)
-    y = r * ct *  sind(ϕ)
-    z = r * sind(θ)
+    local ct = cosd.(θ)
+    x = r .* ct *  cosd.(ϕ)
+    y = r .* ct *  sind.(ϕ)
+    z = r .* sind.(θ)
     # local st = sind(θ)
     # x = r * st *  cosd(ϕ)
     # y = r * st *  sind(ϕ)
