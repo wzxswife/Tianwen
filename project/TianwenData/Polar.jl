@@ -14,7 +14,7 @@ using FFTW
 using Statistics
 using CSV
 using Plots
-include("TCWavelet.jl")
+include("scripts/TCWavelet.jl")
 
 const Rm = 3390.0  #km 
 df = CSV.read("E:/work/Tianwen/Picture/1Hz Waves.csv", DataFrame)
