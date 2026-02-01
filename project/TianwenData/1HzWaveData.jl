@@ -73,19 +73,19 @@ function xyz_to_new_basis(point::Matrix{Float64}, basis_vectors::AbstractVector{
     basis_matrix = hcat(basis_vectors...)
     return (basis_matrix' * point')'
 end
-function calculate_handedness(B::Matrix{Float64})
-    By = B[:, 2]
-    Bz = B[:, 3]
-    n = length(By)
-    fy = fft(By)
-    fz = fft(Bz)
-    cross_phase = angle.(fy .* conj(fz)) 
-    avg_phase = mean(cross_phase)  
-    # 判断旋性：相位差接近+90°为右旋，-90°为左旋
-    handedness = abs(avg_phase) > π/2 ? "unknow" : 
-        avg_phase > 0 ? "right" : "left"
-    return avg_phase, handedness
-end
+# function calculate_handedness(B::Matrix{Float64})
+#     By = B[:, 2]
+#     Bz = B[:, 3]
+#     n = length(By)
+#     fy = fft(By)
+#     fz = fft(Bz)
+#     cross_phase = angle.(fy .* conj(fz)) 
+#     avg_phase = mean(cross_phase)  
+#     # 判断旋性：相位差接近+90°为右旋，-90°为左旋
+#     handedness = abs(avg_phase) > π/2 ? "unknow" : 
+#         avg_phase > 0 ? "right" : "left"
+#     return avg_phase, handedness
+# end
 function angle_between(v1, v2)
     cosθ = dot(v1, v2) / (norm(v1) * norm(v2))
     return acosd(clamp(cosθ, -1.0, 1.0))  # 限制范围防止数值误差
@@ -180,16 +180,16 @@ for i in 1:size(dfr, 1)
     # 振幅Amplitude
     Amplitude = sum(bm.values[1:3])
 
-    # 极化角度PolarAngle
-    e1 = (Bmean./sqrt(sum(Bmean.* Bmean)))[1, :]
-    b1 = bWave[1, :] ./ sqrt(sum(bWave[1, :].^ 2))
-    e3 = cross(e1, b1)
-    e3 = e3./sqrt(sum(e3.^2))
-    e2 = cross(e3, e1)
-    e2 = e2./sqrt(sum(e2.^2))
-    bwave_back = xyz_to_new_basis(bWave, [e1, e2, e3])
-    phase = calculate_handedness(bwave_back)[1]
-    handedness = calculate_handedness(bwave_back)[2]
+    # # 极化角度PolarAngle
+    # e1 = (Bmean./sqrt(sum(Bmean.* Bmean)))[1, :]
+    # b1 = bWave[1, :] ./ sqrt(sum(bWave[1, :].^ 2))
+    # e3 = cross(e1, b1)
+    # e3 = e3./sqrt(sum(e3.^2))
+    # e2 = cross(e3, e1)
+    # e2 = e2./sqrt(sum(e2.^2))
+    # bwave_back = xyz_to_new_basis(bWave, [e1, e2, e3])
+    # phase = calculate_handedness(bwave_back)[1]
+    # handedness = calculate_handedness(bwave_back)[2]
 
     # 激波性质
     bShock = Array(magShock[:, 1:3])

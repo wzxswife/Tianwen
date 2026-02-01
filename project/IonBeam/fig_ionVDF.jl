@@ -11,11 +11,11 @@ using .MAVEN_plot
 using .MAVEN_SWIA
 using .MAVEN_STATIC
 
-yyyy = 2021
+yyyy = 2022
 mm = 08
 dd = 24
-hh = 07
-mi = 00
+hh = 06
+mi = 26
 ss = 30
 
 time_stemp = [
@@ -30,7 +30,7 @@ date_str_dye = "$(year(time_stemp[1]))$(lpad(dayofyear(time_stemp[1]), 3, '0'))"
 
 save_name = "MAVEN_SWIA_Ion_VDF_2D_$(replace(string(time_stemp[1]), ":" => "-")).png"
 save_path = joinpath(pwd(), "results", "IonBeam", save_name)
-data_path = joinpath(pwd(), "Data", "MAVEN", "mvn_swi_l2_coarsearc3d_$(date_str)_v02_r00.cdf")
+data_path = joinpath(pwd(), "Data", "MAVEN", "mvn_swi_l2_coarsesvy3d_$(date_str)_v02_r01.cdf")
 quat_path = joinpath(pwd(), "Data", "MAVEN", "mvn_spice_swia_qu_$(date_str).csv")
 mag_path = joinpath(pwd(), "Data", "MAVEN", "mvn_mag_l3_$(date_str_dye)ss1s_$(date_str)_v01_r01.f77_unformatted")
 
