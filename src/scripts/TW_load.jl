@@ -168,6 +168,38 @@ function load_mag_TW_DF(file::String);
     return mag2c32hz, BMSO32hz
 end
 
+function loda_mag_MAVEN_DF(file::String)
+    println("Reading file: ")
+    println(file)
+    for line in eachline(file)
+        if line[1:6] != "  $year"
+            skip = skip+1
+        else
+            break
+        end
+    end
+
+    local Rm = 3393.5 #火星半径，单位km
+
+    mag2c32hz_temp = identity.(DataFrame(readdlm(file, skipstart=skip), :auto))
+
+    BMSO32hz = Array(mag2c32hz_temp[:, 8:10])
+    magut32hz = @. DateTime(mag2c32hz_temp[:, 1]) + Day(mag2c32hz_temp[:, 2]-1) + Hour(mag2c32hz_temp[:, 3]) + Minute(mag2c32hz_temp[:, 4]) + Second(mag2c32hz_temp[:, 5]) + Millisecond(mag2c32hz_temp[:, 6])
+    magjlut32hz = datetime2julian.(magut32hz)
+    magjlut32hz= magjlut32hz.-magjlut32hz[1]
+    PosMSO32hz = Array(mag2c32hz_temp[:, 12:14])./Rm
+    mag2c32hz = DataFrame()
+    mag2c32hz.Time = magut32hz
+    mag2c32hz.JulUT = magjlut32hz
+    mag2c32hz.X_MSO = BMSO32hz[:, 1]
+    mag2c32hz.Y_MSO = BMSO32hz[:, 2]
+    mag2c32hz.Z_MSO = BMSO32hz[:, 3]
+    mag2c32hz.Probe_Position_X_MSO = PosMSO32hz[:, 1]
+    mag2c32hz.Probe_Position_Y_MSO = PosMSO32hz[:, 2]
+    mag2c32hz.Probe_Position_Z_MSO = PosMSO32hz[:, 3]
+    println("Data read finished!")
+    return mag2c32hz, BMSO32hz, PosMSO32hz
+end
 
 
 end
