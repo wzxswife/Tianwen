@@ -26,8 +26,8 @@ using .BowshockAngle
 # ============================================================
 
 const DATA_PATH = joinpath(@__DIR__, "..", "..", "Data", "32Hz")
-const OUTPUT_PATH = joinpath(@__DIR__, "Picture", "BowshockAngle")
-const DATE_STR = "20221025"
+const OUTPUT_PATH = joinpath(@__DIR__, "Picture", "Bowshock")
+const DATE_STR = "20220824"
 const THRESHOLD = 0.5  # 弓激波附近距离阈值 (Rm)
 
 # ============================================================
@@ -132,97 +132,97 @@ end
 # 3. 可视化
 # ============================================================
 
-println("\n" * "="^60)
-println("3. 可视化")
-println("="^60)
+# println("\n" * "="^60)
+# println("3. 可视化")
+# println("="^60)
 
-# 绑制3D图
-println("\n绑制3D分析图...")
-fig_3d = BowshockAngle.plot_3d_analysis(df, events, OUTPUT_PATH)
-println("✓ 3D图已保存到: $OUTPUT_PATH/bowshock_angle_3d.png")
+# # 绑制3D图
+# println("\n绑制3D分析图...")
+# fig_3d = BowshockAngle.plot_3d_analysis(df, events, OUTPUT_PATH)
+# println("✓ 3D图已保存到: $OUTPUT_PATH/bowshock_angle_3d.png")
 
-# 绑制2D切面图
-println("\n绑制2D切面图...")
-fig_2d = BowshockAngle.plot_2d_slices(df, events, OUTPUT_PATH)
-println("✓ 2D切面图已保存到: $OUTPUT_PATH/bowshock_angle_2d.png")
+# # 绑制2D切面图
+# println("\n绑制2D切面图...")
+# fig_2d = BowshockAngle.plot_2d_slices(df, events, OUTPUT_PATH)
+# println("✓ 2D切面图已保存到: $OUTPUT_PATH/bowshock_angle_2d.png")
 
-# 绑制时间序列图
-println("\n绑制时间序列图...")
-fig_ts = BowshockAngle.plot_angle_timeseries(df, OUTPUT_PATH)
-println("✓ 时间序列图已保存到: $OUTPUT_PATH/angle_timeseries.png")
+# # 绑制时间序列图
+# println("\n绑制时间序列图...")
+# fig_ts = BowshockAngle.plot_angle_timeseries(df, OUTPUT_PATH)
+# println("✓ 时间序列图已保存到: $OUTPUT_PATH/angle_timeseries.png")
 
-# ============================================================
-# 4. 统计分析
-# ============================================================
+# # ============================================================
+# # 4. 统计分析
+# # ============================================================
 
-println("\n" * "="^60)
-println("4. 统计分析")
-println("="^60)
+# println("\n" * "="^60)
+# println("4. 统计分析")
+# println("="^60)
 
-# 整体统计
-valid_angles = filter(!isnan, df[!, :imf_normal_angle])
-if !isempty(valid_angles)
-    println("\n整体夹角统计:")
-    println("  数据点数: $(length(valid_angles))")
-    println("  平均夹角: $(round(mean(valid_angles), digits=1))°")
-    println("  中位数: $(round(median(valid_angles), digits=1))°")
-    println("  标准差: $(round(std(valid_angles), digits=1))°")
-    println("  范围: [$(round(minimum(valid_angles), digits=1))°, " *
-            "$(round(maximum(valid_angles), digits=1))°]")
+# # 整体统计
+# valid_angles = filter(!isnan, df[!, :imf_normal_angle])
+# if !isempty(valid_angles)
+#     println("\n整体夹角统计:")
+#     println("  数据点数: $(length(valid_angles))")
+#     println("  平均夹角: $(round(mean(valid_angles), digits=1))°")
+#     println("  中位数: $(round(median(valid_angles), digits=1))°")
+#     println("  标准差: $(round(std(valid_angles), digits=1))°")
+#     println("  范围: [$(round(minimum(valid_angles), digits=1))°, " *
+#             "$(round(maximum(valid_angles), digits=1))°]")
 
-    # 夹角分布
-    println("\n  夹角分布:")
-    bins = [0, 30, 60, 90, 120, 150, 180]
-    for i in 1:length(bins)-1
-        count = sum(bins[i] .<= valid_angles .< bins[i+1])
-        percentage = 100 * count / length(valid_angles)
-        println("    $(bins[i])°-$(bins[i+1])°: $count ($(round(percentage, digits=1))%)")
-    end
-end
+#     # 夹角分布
+#     println("\n  夹角分布:")
+#     bins = [0, 30, 60, 90, 120, 150, 180]
+#     for i in 1:length(bins)-1
+#         count = sum(bins[i] .<= valid_angles .< bins[i+1])
+#         percentage = 100 * count / length(valid_angles)
+#         println("    $(bins[i])°-$(bins[i+1])°: $count ($(round(percentage, digits=1))%)")
+#     end
+# end
 
-# 距离统计
-println("\n距离统计:")
-valid_dist = filter(!isinf, df[!, :dist_to_bs])
-if !isempty(valid_dist)
-    println("  平均距离: $(round(mean(valid_dist), digits=3)) Rm")
-    println("  最小距离: $(round(minimum(valid_dist), digits=3)) Rm")
-    println("  最大距离: $(round(maximum(valid_dist), digits=3)) Rm")
-end
+# # 距离统计
+# println("\n距离统计:")
+# valid_dist = filter(!isinf, df[!, :dist_to_bs])
+# if !isempty(valid_dist)
+#     println("  平均距离: $(round(mean(valid_dist), digits=3)) Rm")
+#     println("  最小距离: $(round(minimum(valid_dist), digits=3)) Rm")
+#     println("  最大距离: $(round(maximum(valid_dist), digits=3)) Rm")
+# end
 
-# ============================================================
-# 5. 运行完整分析流程
-# ============================================================
+# # ============================================================
+# # 5. 运行完整分析流程
+# # ============================================================
 
-println("\n" * "="^60)
-println("5. 运行完整分析流程")
-println("="^60)
+# println("\n" * "="^60)
+# println("5. 运行完整分析流程")
+# println("="^60)
 
-# 运行另一个日期的分析作为演示
-println("\n运行完整分析流程 (日期: 20221026)...")
-df2, events2 = BowshockAngle.run_analysis("20221026", DATA_PATH, OUTPUT_PATH;
-                                           threshold=THRESHOLD)
+# # 运行另一个日期的分析作为演示
+# println("\n运行完整分析流程 (日期: 20221026)...")
+# df2, events2 = BowshockAngle.run_analysis("20221026", DATA_PATH, OUTPUT_PATH;
+#                                            threshold=THRESHOLD)
 
-# ============================================================
-# 6. 总结
-# ============================================================
+# # ============================================================
+# # 6. 总结
+# # ============================================================
 
-println("\n" * "="^60)
-println("分析完成!")
-println("="^60)
+# println("\n" * "="^60)
+# println("分析完成!")
+# println("="^60)
 
-println("\n输出文件:")
-output_files = filter(f -> endswith(f, ".png"), readdir(OUTPUT_PATH))
-for f in output_files
-    filepath = joinpath(OUTPUT_PATH, f)
-    fsize = filesize(filepath) / 1024
-    println("  - $f ($(round(fsize, digits=1)) KB)")
-end
+# println("\n输出文件:")
+# output_files = filter(f -> endswith(f, ".png"), readdir(OUTPUT_PATH))
+# for f in output_files
+#     filepath = joinpath(OUTPUT_PATH, f)
+#     fsize = filesize(filepath) / 1024
+#     println("  - $f ($(round(fsize, digits=1)) KB)")
+# end
 
-println("\n" * "="^60)
-println("使用说明:")
-println("="^60)
-println("1. 修改 DATE_STR 变量可分析不同日期")
-println("2. 调整 THRESHOLD 变量可改变事件检测灵敏度")
-println("3. 输出图片位于: $OUTPUT_PATH")
-println("4. 查看生成的PNG文件了解分析结果")
-println("="^60)
+# println("\n" * "="^60)
+# println("使用说明:")
+# println("="^60)
+# println("1. 修改 DATE_STR 变量可分析不同日期")
+# println("2. 调整 THRESHOLD 变量可改变事件检测灵敏度")
+# println("3. 输出图片位于: $OUTPUT_PATH")
+# println("4. 查看生成的PNG文件了解分析结果")
+# println("="^60)

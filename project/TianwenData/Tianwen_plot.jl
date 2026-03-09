@@ -46,12 +46,9 @@ const Rm = 3390.0  # 火星半径 (km)
 
 """
     bowshock(x)
-
-火星弓激波模型 (Edberg et al., 2008)
-
+火星弓激波模型
 参数:
     x: 火星固连坐标系X坐标 (Rm)
-
 返回值:
     弓激波半径 (Rm), Inf64 表示超出模型范围
 """
@@ -65,12 +62,9 @@ end
 
 """
     magnetopause(x)
-
-火星磁层顶模型 (Edberg et al., 2008)
-
+火星磁层顶模型
 参数:
     x: 火星固连坐标系X坐标 (Rm)
-
 返回值:
     磁层顶半径 (Rm), Inf64 表示超出模型范围
 """
@@ -84,7 +78,7 @@ function magnetopause(xmp)
 end
 
 """
-    calculate_model_curves(; np=5001, xmin=-10, xmax=3)
+    calculate_model_curves(np=5001, xmin=-10, xmax=3)
 
 计算火星磁场边界模型曲线
 
@@ -92,11 +86,10 @@ end
     np: 曲线分辨率
     xmin: X轴范围下限
     xmax: X轴范围上限
-
 返回值:
     NamedTuple: (xshock, ryzshock, xmp, ryzmp)
 """
-function calculate_model_curves(; np::Integer=5001, xmin::Real=-10, xmax::Real=3)
+function calculate_model_curves(np::Integer=5001, xmin::Real=-10, xmax::Real=3)
     # 弓激波
     xsh = range(xmin, xmax, length=np)
     ryzsh = bowshock.(xsh)
@@ -120,13 +113,10 @@ end
 
 """
     load_data(filepath; Rm_val=Rm)
-
 一键加载和预处理32Hz磁场数据文件
-
 参数:
     filepath: 数据文件路径
     Rm_val: 火星半径常数 (用于位置归一化)
-
 返回值:
     DataFrame: 预处理后的数据框
 """

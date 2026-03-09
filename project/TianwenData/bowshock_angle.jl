@@ -32,7 +32,8 @@ using CairoMakie
 using GeometryBasics
 using LaTeXStrings
 
-export bowshock, calculate_bowshock_normal, distance_to_bowshock
+export bowshock_r, bowshock_dr_dx, bowshock_normal_analytic
+export calculate_bowshock_normal, distance_to_bowshock
 export calculate_imf_normal_angle, analyze_crossings
 export plot_3d_analysis, plot_2d_slices
 
@@ -83,6 +84,114 @@ function bowshock_surface(x, y, z)
     r = sqrt(y^2 + z^2)
     r_bs = bowshock_r(x)
     return isfinite(r_bs) ? r - r_bs : Inf64
+end
+
+"""
+    bowshock_dr_dx(x)
+
+解析计算弓激波半径对x的导数 dr/dx
+
+弓激波方程:
+    r(x) = sqrt((ϵ²-1)(x-xF)² - 2ϵL(x-xF) + L²)
+
+对x求导:
+    dr/dx = [(ϵ²-1)(x-xF) - ϵL] / r(x)
+
+参数:
+    x: MSO坐标系X坐标 (Rm)
+
+返回值:
+    dr/dx 的值, Inf64 表示超出模型范围
+"""
+function bowshock_dr_dx(x)
+    r_bs = bowshock_r(x)
+    if !isfinite(r_bs) || r_bs < 1e-10
+        return Inf64
+    end
+    
+    # dr/dx = [(ϵ²-1)(x-xF) - ϵL] / r
+    numerator = (BS_EPSILON^2 - 1.0) * (x - BS_XF) - BS_EPSILON * BS_L
+    return numerator / r_bs
+end
+
+"""
+    bowshock_normal_analytic(x, y, z)
+
+解析计算弓激波表面法向量
+
+数学推导:
+---------
+弓激波是旋转二次曲面，隐函数形式为:
+    F(x,y,z) = y² + z² - r(x)² = 0
+
+梯度 ∇F 给出法向量方向:
+    ∂F/∂x = -2r·(dr/dx)
+    ∂F/∂y = 2y
+    ∂F/∂z = 2z
+
+归一化后，单位法向量为:
+    n = (-dr/dx, y/r, z/r) / |n|
+
+其中 r = √(y²+z²)，dr/dx 由 bowshock_dr_dx() 计算
+
+参数:
+    x, y, z: 位置坐标 (Rm)
+
+返回值:
+    单位法向量 (nx, ny, nz)，指向弓激波外侧（太阳风侧）
+"""
+function bowshock_normal_analytic(x, y, z)
+    # 计算径向距离
+    r_perp = sqrt(y^2 + z^2)
+    
+    # 检查是否在弓激波有效范围内
+    r_bs = bowshock_r(x)
+    if !isfinite(r_bs)
+        return [0.0, 0.0, 0.0]  # 超出范围返回零向量
+    end
+    
+    # 特殊情况：在x轴上（r_perp ≈ 0）
+    if r_perp < 1e-10
+        # 法向量沿x轴方向
+        # 在弓激波晨侧（x > xF），外法向指向 +X
+        # 在弓激波尾侧（x < xF），外法向指向 -X
+        drdx = bowshock_dr_dx(x)
+        if isfinite(drdx)
+            # 法向量沿x方向，外法向指向太阳风侧
+            nx = drdx > 0 ? 1.0 : -1.0
+            return [nx, 0.0, 0.0]
+        else
+            return [1.0, 0.0, 0.0]
+        end
+    end
+    
+    # 计算 dr/dx
+    drdx = bowshock_dr_dx(x)
+    if !isfinite(drdx)
+        return [0.0, 0.0, 0.0]
+    end
+    
+    # 法向量分量（未归一化）
+    # n = (-dr/dx, y/r, z/r)
+    nx = -drdx
+    ny = y / r_perp
+    nz = z / r_perp
+    
+    # 归一化
+    n_mag = sqrt(nx^2 + ny^2 + nz^2)
+    if n_mag < 1e-10
+        return [1.0, 0.0, 0.0]
+    end
+    
+    n = [nx, ny, nz] / n_mag
+    
+    # 确保法向量指向外侧（太阳风侧）
+    # 在弓激波处，外法向应大致指向-X方向（朝向太阳）
+    if n[1] > 0
+        n = -n
+    end
+    
+    return n
 end
 
 """
