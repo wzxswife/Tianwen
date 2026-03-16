@@ -8,7 +8,7 @@ include("TCWavelet.jl")
 using Wavelets
 
 export load_mag_2c_bydlm, calculate_mag, get_spc2mso_rot_matrix_via_2c
-export read_list, caculate_wavelet
+export read_list, caculate_wavelet, find_avail_data
 
 # function load_mag(file::String);#弃用，以dlm方法为准
 
@@ -158,7 +158,27 @@ function caculate_wavelet(mag_data, dt; mother="MORLET")
     return Bpower, period
 end
 
-# -----------以下为DataFrame版本的读取函数----------------
+"""
+从数据字典中筛选出在指定时间范围内的数据
+"""
+function find_avail_data(data::Dict, time_range::Vector{DateTime}, keys)
+    avail_data = Dict()
+    ind = findall(minimum(time_range) .<= data[:epoch] .<= maximum(time_range))
+    if haskey(data, :position)
+        nan_rows = any(isnan.(data[:position][ind, :]), dims=2)[:]
+        ind = ind[.!nan_rows]
+    end
+    for key in keys
+        haskey(data, key) || continue
+        value = data[key]
+        length(value) == 1 && continue
+        # print("$key: $(length(value))\n")
+        avail_data[key] = value[ind]
+    end
+    return avail_data
+end
+
+# -----------以下为DataFrame版本的读取函数（已弃用）----------------
 # function load_mag_TW_DF(file::String);
 #     println("Reading file: ")
 #     println(file)
