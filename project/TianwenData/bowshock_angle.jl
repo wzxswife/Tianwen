@@ -34,6 +34,7 @@ using LaTeXStrings
 
 export bowshock_r, bowshock_dr_dx, bowshock_normal_analytic
 export calculate_bowshock_normal, distance_to_bowshock
+export nearest_point_on_bowshock
 export calculate_imf_normal_angle, analyze_crossings
 export plot_3d_analysis, plot_2d_slices
 
@@ -267,6 +268,258 @@ function distance_to_bowshock(x, y, z)
     # 正值: r > r_bs, 在弓激波外
     # 负值: r < r_bs, 在弓激波内
     return r - r_bs
+end
+
+"""
+    nearest_point_on_bowshock(x0, y0, z0; tol=1e-10, maxiter=100)
+
+找到弓激波表面上距离给定点最近的点
+
+数学原理:
+---------
+由于弓激波是绕x轴的旋转曲面，可以利用对称性简化问题：
+1. 设 r₀ = √(y₀² + z₀²) 为点到x轴的距离
+2. 弓激波上最近点在同一子午面上，可表示为 (x, r(x)·y₀/r₀, r(x)·z₀/r₀)
+3. 距离平方: d² = (x-x₀)² + (r(x)-r₀)²
+4. 对x求导并令其为零，得到最优解
+
+求解方法:
+- 使用牛顿迭代法求解 d(d²)/dx = 0
+- 目标函数: f(x) = (x-x₀) + (r(x)-r₀)·(dr/dx) = 0
+
+参数:
+    x0, y0, z0: 查询点坐标 (Rm)
+    tol: 收敛容差
+    maxiter: 最大迭代次数
+
+返回值:
+    NamedTuple: (x, y, z, distance)
+    - x, y, z: 弓激波上最近点坐标 (Rm)
+    - distance: 最近距离 (Rm)
+"""
+function nearest_point_on_bowshock(x0, y0, z0; tol::Float64=1e-10, maxiter::Int=100)
+    # 计算点到x轴的距离
+    r0 = sqrt(y0^2 + z0^2)
+    
+    # 特殊情况：点在x轴上
+    if r0 < 1e-10
+        # 找到弓激波上x坐标最接近x0的点
+        x_best = _find_nearest_x_on_axis(x0)
+        r_bs = bowshock_r(x_best)
+        return (x=x_best, y=0.0, z=0.0, distance=abs(x0 - x_best))
+    end
+    
+    # 定义目标函数: f(x) = (x-x0) + (r(x)-r0) * dr/dx
+    # 我们需要找到 f(x) = 0 的解
+    function f(x)
+        r = bowshock_r(x)
+        if !isfinite(r)
+            return Inf
+        end
+        drdx = bowshock_dr_dx(x)
+        return (x - x0) + (r - r0) * drdx
+    end
+    
+    # 牛顿法需要的导数: f'(x)
+    function df(x)
+        r = bowshock_r(x)
+        if !isfinite(r) || r < 1e-10
+            return 1.0
+        end
+        drdx = bowshock_dr_dx(x)
+        # d²r/dx² = [(ϵ²-1) - (dr/dx)²] / r
+        d2rdx2 = (BS_EPSILON^2 - 1.0 - drdx^2) / r
+        return 1.0 + drdx^2 + (r - r0) * d2rdx2
+    end
+    
+    # 初始猜测：使用x0
+    x = x0
+    
+    # 确保初始点在有效范围内
+    r_init = bowshock_r(x)
+    if !isfinite(r_init)
+        # 寻找有效起点
+        x = _find_valid_starting_x(x0)
+    end
+    
+    # 牛顿迭代
+    converged = false
+    for iter in 1:maxiter
+        fx = f(x)
+        if abs(fx) < tol
+            converged = true
+            break
+        end
+        
+        dfx = df(x)
+        if abs(dfx) < 1e-15
+            break
+        end
+        
+        x_new = x - fx / dfx
+        
+        # 限制在合理范围内
+        x_new = clamp(x_new, -20.0, 5.0)
+        
+        if abs(x_new - x) < tol
+            converged = true
+            x = x_new
+            break
+        end
+        
+        x = x_new
+    end
+    
+    # 计算最近点的坐标
+    r_bs = bowshock_r(x)
+    if !isfinite(r_bs)
+        # 牛顿法失败，使用黄金分割搜索
+        x = _golden_section_search(x0, r0)
+        r_bs = bowshock_r(x)
+    end
+    
+    # 最近点坐标
+    y_nearest = r_bs * y0 / r0
+    z_nearest = r_bs * z0 / r0
+    
+    # 计算距离
+    dist = sqrt((x - x0)^2 + (y_nearest - y0)^2 + (z_nearest - z0)^2)
+    
+    return (x=x, y=y_nearest, z=z_nearest, distance=dist)
+end
+
+"""
+    _find_valid_starting_x(x0; x_range=(-15.0, 3.0))
+
+辅助函数：找到一个有效的起始x值（在弓激波范围内）
+"""
+function _find_valid_starting_x(x0; x_range=(-15.0, 3.0))
+    xmin, xmax = x_range
+    
+    # 首先检查x0是否有效
+    if isfinite(bowshock_r(x0))
+        return x0
+    end
+    
+    # 找到有效范围
+    x_valid = Float64[]
+    for x in range(xmin, xmax, length=100)
+        if isfinite(bowshock_r(x))
+            push!(x_valid, x)
+        end
+    end
+    
+    if isempty(x_valid)
+        return 0.0
+    end
+    
+    # 返回最接近x0的有效点
+    _, idx = findmin(abs.(x_valid .- x0))
+    return x_valid[idx]
+end
+
+"""
+    _find_nearest_x_on_axis(x0)
+
+辅助函数：当点在x轴上时，找到弓激波上最近的x坐标
+使用黄金分割搜索法
+"""
+function _find_nearest_x_on_axis(x0)
+    # 黄金比例
+    phi = (1.0 + sqrt(5.0)) / 2.0
+    resphi = 2.0 - phi
+    
+    # 搜索范围（弓激波有效范围）
+    a, b = -15.0, 3.0
+    
+    # 目标函数：距离
+    function objective(x)
+        r = bowshock_r(x)
+        if !isfinite(r)
+            return Inf
+        end
+        return abs(x - x0)
+    end
+    
+    x1 = a + resphi * (b - a)
+    x2 = b - resphi * (b - a)
+    
+    f1 = objective(x1)
+    f2 = objective(x2)
+    
+    for _ in 1:100
+        if f1 < f2
+            b = x2
+            x2 = x1
+            f2 = f1
+            x1 = a + resphi * (b - a)
+            f1 = objective(x1)
+        else
+            a = x1
+            x1 = x2
+            f1 = f2
+            x2 = b - resphi * (b - a)
+            f2 = objective(x2)
+        end
+        
+        if abs(b - a) < 1e-10
+            break
+        end
+    end
+    
+    return (a + b) / 2.0
+end
+
+"""
+    _golden_section_search(x0, r0)
+
+辅助函数：使用黄金分割搜索法找到最优x值
+最小化距离平方函数 d² = (x-x0)² + (r(x)-r0)²
+"""
+function _golden_section_search(x0, r0)
+    # 黄金比例
+    phi = (1.0 + sqrt(5.0)) / 2.0
+    resphi = 2.0 - phi
+    
+    # 找到有效搜索范围
+    a, b = -15.0, 3.0
+    
+    # 目标函数：距离平方
+    function objective(x)
+        r = bowshock_r(x)
+        if !isfinite(r)
+            return Inf
+        end
+        return (x - x0)^2 + (r - r0)^2
+    end
+    
+    x1 = a + resphi * (b - a)
+    x2 = b - resphi * (b - a)
+    
+    f1 = objective(x1)
+    f2 = objective(x2)
+    
+    for _ in 1:100
+        if f1 < f2
+            b = x2
+            x2 = x1
+            f2 = f1
+            x1 = a + resphi * (b - a)
+            f1 = objective(x1)
+        else
+            a = x1
+            x1 = x2
+            f1 = f2
+            x2 = b - resphi * (b - a)
+            f2 = objective(x2)
+        end
+        
+        if abs(b - a) < 1e-10
+            break
+        end
+    end
+    
+    return (a + b) / 2.0
 end
 
 """

@@ -5,6 +5,9 @@ module TW_load
 root_path = "E:/Tianwen-1/"
 using Dates
 
+export load_mag_2c_bydlm, calculate_mag, get_spc2mso_rot_matrix_via_2c
+export read_list, load_mag_TW_DF, load_mag_MAVEN_DF
+
 # function load_mag(file::String);#弃用，以dlm方法为准
 
 #     lines=readlines(file)
@@ -85,8 +88,6 @@ function load_mag_2c_bydlm(file::String);
     return data
 end
 
-
-
 function calculate_mag(position;models=["alt"])
     function c_alt(position) 
         alt = sqrt.(sum(position.^2, dims=2)) .- 3393.5
@@ -142,64 +143,65 @@ end
 
 
 # -----------以下为DataFrame版本的读取函数----------------
-function load_mag_TW_DF(file::String);
-    println("Reading file: ")
-    println(file)
-    local Rm = 3393.5 #火星半径，单位km
-    mag2c32hz = identity.(DataFrame(readdlm(file, skipstart=19), :auto))
-    name = ["Time", "Sampling_Rate", "X_MSO", "Y_MSO", "Z_MSO", "Probe_Position_X_MSO", "Probe_Position_Y_MSO", "Probe_Position_Z_MSO", "Roll", "Pitch", "Yaw",  "Quality_Flags"]
-    rename!(mag2c32hz, name)
-    mag2c32hz[!, :Time] = map(x->DateTime(x[begin:end-4], DateFormat("y-m-dTH:M:S.s")), mag2c32hz[!, :Time])
-    mag2c32hz[!, :JulUT] = datetime2julian.(mag2c32hz[!, :Time])
-    mag2c32hz[!,[ :Probe_Position_X_MSO, :Probe_Position_Y_MSO, :Probe_Position_Z_MSO]] = mag2c32hz[!,[ :Probe_Position_X_MSO, :Probe_Position_Y_MSO, :Probe_Position_Z_MSO]]./Rm
-    unique!(mag2c32hz) #remove depulicate rows
-    sort!(mag2c32hz) #sorting
-    magut32hz = mag2c32hz[:, :JulUT].-mag2c32hz[1, :JulUT]
-    BMSO32hz = mag2c32hz[:, [:X_MSO, :Y_MSO, :Z_MSO]]
-    ind0 = findall(x-> !isnan(x), BMSO32hz[!, 1] ) 
-    ind1 = findall(x-> isnan(x), BMSO32hz[!, 1] ) 
-    if length(ind1) >= 1 && length(ind0) > 1
-        for ib in 1:3 
-            interp_linear = linear_interpolation(magut32hz[ind0], BMSO32hz[ind0, ib]; extrapolation_bc=Line())
-            BMSO32hz[ind1, ib] = interp_linear(magut32hz[ind1])
-        end
-    end
-    println("Data read finished!")
-    return mag2c32hz, BMSO32hz
-end
+# function load_mag_TW_DF(file::String);
+#     println("Reading file: ")
+#     println(file)
+#     local Rm = 3393.5 #火星半径，单位km
+#     mag2c32hz = identity.(DataFrame(readdlm(file, skipstart=19), :auto))
+#     name = ["Time", "Sampling_Rate", "X_MSO", "Y_MSO", "Z_MSO", "Probe_Position_X_MSO", "Probe_Position_Y_MSO", "Probe_Position_Z_MSO", "Roll", "Pitch", "Yaw",  "Quality_Flags"]
+#     rename!(mag2c32hz, name)
+#     mag2c32hz[!, :Time] = map(x->DateTime(x[begin:end-4], DateFormat("y-m-dTH:M:S.s")), mag2c32hz[!, :Time])
+#     mag2c32hz[!, :JulUT] = datetime2julian.(mag2c32hz[!, :Time])
+#     mag2c32hz[!,[ :Probe_Position_X_MSO, :Probe_Position_Y_MSO, :Probe_Position_Z_MSO]] = mag2c32hz[!,[ :Probe_Position_X_MSO, :Probe_Position_Y_MSO, :Probe_Position_Z_MSO]]./Rm
+#     unique!(mag2c32hz) #remove depulicate rows
+#     sort!(mag2c32hz) #sorting
+#     magut32hz = mag2c32hz[:, :JulUT].-mag2c32hz[1, :JulUT]
+#     BMSO32hz = mag2c32hz[:, [:X_MSO, :Y_MSO, :Z_MSO]]
+#     ind0 = findall(x-> !isnan(x), BMSO32hz[!, 1] ) 
+#     ind1 = findall(x-> isnan(x), BMSO32hz[!, 1] ) 
+#     if length(ind1) >= 1 && length(ind0) > 1
+#         for ib in 1:3 
+#             interp_linear = linear_interpolation(magut32hz[ind0], BMSO32hz[ind0, ib]; extrapolation_bc=Line())
+#             BMSO32hz[ind1, ib] = interp_linear(magut32hz[ind1])
+#         end
+#     end
+#     println("Data read finished!")
+#     return mag2c32hz, BMSO32hz
+# end
 
-function loda_mag_MAVEN_DF(file::String)
-    println("Reading file: ")
-    println(file)
-    for line in eachline(file)
-        if line[1:6] != "  $year"
-            skip = skip+1
-        else
-            break
-        end
-    end
+# function load_mag_MAVEN_DF(file::String, year);
+#     println("Reading file: ")
+#     println(file)
+#     skip = 1 
+#     for line in eachline(file)
+#         if line[1:6] != "  $year"
+#             skip = skip+1
+#         else
+#             break
+#         end
+#     end
 
-    local Rm = 3393.5 #火星半径，单位km
+#     local Rm = 3393.5 #火星半径，单位km
 
-    mag2c32hz_temp = identity.(DataFrame(readdlm(file, skipstart=skip), :auto))
+#     mag2c32hz_temp = identity.(DataFrame(readdlm(file, skipstart=skip), :auto))
 
-    BMSO32hz = Array(mag2c32hz_temp[:, 8:10])
-    magut32hz = @. DateTime(mag2c32hz_temp[:, 1]) + Day(mag2c32hz_temp[:, 2]-1) + Hour(mag2c32hz_temp[:, 3]) + Minute(mag2c32hz_temp[:, 4]) + Second(mag2c32hz_temp[:, 5]) + Millisecond(mag2c32hz_temp[:, 6])
-    magjlut32hz = datetime2julian.(magut32hz)
-    magjlut32hz= magjlut32hz.-magjlut32hz[1]
-    PosMSO32hz = Array(mag2c32hz_temp[:, 12:14])./Rm
-    mag2c32hz = DataFrame()
-    mag2c32hz.Time = magut32hz
-    mag2c32hz.JulUT = magjlut32hz
-    mag2c32hz.X_MSO = BMSO32hz[:, 1]
-    mag2c32hz.Y_MSO = BMSO32hz[:, 2]
-    mag2c32hz.Z_MSO = BMSO32hz[:, 3]
-    mag2c32hz.Probe_Position_X_MSO = PosMSO32hz[:, 1]
-    mag2c32hz.Probe_Position_Y_MSO = PosMSO32hz[:, 2]
-    mag2c32hz.Probe_Position_Z_MSO = PosMSO32hz[:, 3]
-    println("Data read finished!")
-    return mag2c32hz, BMSO32hz, PosMSO32hz
-end
+#     BMSO32hz = Array(mag2c32hz_temp[:, 8:10])
+#     magut32hz = @. DateTime(mag2c32hz_temp[:, 1]) + Day(mag2c32hz_temp[:, 2]-1) + Hour(mag2c32hz_temp[:, 3]) + Minute(mag2c32hz_temp[:, 4]) + Second(mag2c32hz_temp[:, 5]) + Millisecond(mag2c32hz_temp[:, 6])
+#     magjlut32hz = datetime2julian.(magut32hz)
+#     magjlut32hz= magjlut32hz.-magjlut32hz[1]
+#     PosMSO32hz = Array(mag2c32hz_temp[:, 12:14])./Rm
+#     mag2c32hz = DataFrame()
+#     mag2c32hz.Time = magut32hz
+#     mag2c32hz.JulUT = magjlut32hz
+#     mag2c32hz.X_MSO = BMSO32hz[:, 1]
+#     mag2c32hz.Y_MSO = BMSO32hz[:, 2]
+#     mag2c32hz.Z_MSO = BMSO32hz[:, 3]
+#     mag2c32hz.Probe_Position_X_MSO = PosMSO32hz[:, 1]
+#     mag2c32hz.Probe_Position_Y_MSO = PosMSO32hz[:, 2]
+#     mag2c32hz.Probe_Position_Z_MSO = PosMSO32hz[:, 3]
+#     println("Data read finished!")
+#     return mag2c32hz, BMSO32hz, PosMSO32hz
+# end
 
 
 end
