@@ -4,9 +4,11 @@
 module TW_load
 root_path = "E:/Tianwen-1/"
 using Dates
+include("TCWavelet.jl")
+using Wavelets
 
 export load_mag_2c_bydlm, calculate_mag, get_spc2mso_rot_matrix_via_2c
-export read_list, load_mag_TW_DF, load_mag_MAVEN_DF
+export read_list, caculate_wavelet
 
 # function load_mag(file::String);#弃用，以dlm方法为准
 
@@ -141,6 +143,20 @@ function read_list()
     return files
 end
 
+"""
+计算小波变换
+"""
+function caculate_wavelet(mag_data, dt; mother="MORLET")
+    ns =  length(mag_data[:, 1])
+    wave, period, scale, coi = wavelet(reshape(mag_data[:, 1], ns), dt; pad=1, mother=mother)
+    xpower = abs.(wave).^2
+    wave, period, scale, coi = wavelet(reshape(mag_data[:, 2], ns), dt; pad=1, mother=mother)
+    ypower = abs.(wave).^2
+    wave, period, scale, coi = wavelet(reshape(mag_data[:, 3], ns), dt; pad=1, mother=mother)
+    zpower = abs.(wave).^2
+    Bpower =xpower+ypower+zpower
+    return Bpower, period
+end
 
 # -----------以下为DataFrame版本的读取函数----------------
 # function load_mag_TW_DF(file::String);
