@@ -58,6 +58,7 @@ function load_mag_2c_bydlm(file::String);
     sort!(mag2c1hz) #sorting
 
     times = mag2c1hz[!, :Time]
+    julUTtimes = datetime2julian.(times)
     BMSO1hz = mag2c1hz[:, [:X_MSO, :Y_MSO, :Z_MSO]]
     position = mag2c1hz[:, [:Probe_Position_X_MSO, :Probe_Position_Y_MSO, :Probe_Position_Z_MSO]]
     roll = mag2c1hz[!, :Roll]
@@ -78,6 +79,7 @@ function load_mag_2c_bydlm(file::String);
     data=Dict{Symbol,Any}(
         :data_load_flag => true,
         :time => times |> Array,
+        :JulUTtime => julUTtimes |> Array,
         :epoch => times |> Array,
         :B => BMSO1hz |> Array,
         :B_total => B_total |> Array,
@@ -144,7 +146,7 @@ function read_list()
 end
 
 """
-计算小波变换
+计算小波变换（测试通过）
 """
 function caculate_wavelet(mag_data, dt; mother="MORLET")
     ns =  length(mag_data[:, 1])
@@ -159,21 +161,35 @@ function caculate_wavelet(mag_data, dt; mother="MORLET")
 end
 
 """
-从数据字典中筛选出在指定时间范围内的数据
+从数据字典中筛选出在指定时间范围内的数据（测试通过）
 """
 function find_avail_data(data::Dict, time_range::Vector{DateTime}, keys)
     avail_data = Dict()
     ind = findall(minimum(time_range) .<= data[:epoch] .<= maximum(time_range))
+    
+    # 筛选 position 中的 NaN
     if haskey(data, :position)
         nan_rows = any(isnan.(data[:position][ind, :]), dims=2)[:]
         ind = ind[.!nan_rows]
     end
+    
+    # 筛选 B 中的 NaN
+    if haskey(data, :B)
+        nan_rows = any(isnan.(data[:B][ind, :]), dims=2)[:]
+        ind = ind[.!nan_rows]
+    end
+    
+    # 筛选 B_total 中的 NaN
+    if haskey(data, :B_total)
+        nan_rows = isnan.(data[:B_total][ind])
+        ind = ind[.!nan_rows]
+    end
+    
     for key in keys
         haskey(data, key) || continue
         value = data[key]
         length(value) == 1 && continue
-        # print("$key: $(length(value))\n")
-        avail_data[key] = value[ind]
+        avail_data[key] = ndims(value) == 2 ? value[ind, :] : value[ind]
     end
     return avail_data
 end

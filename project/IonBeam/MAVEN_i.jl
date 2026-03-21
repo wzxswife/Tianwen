@@ -3,13 +3,13 @@ using Dates
 using Statistics
 using CairoMakie
 
-omni_file = joinpath(pwd(), "Data", "MAVEN", "mvn_swi_l2_coarsearc3d_20210824_v02_r00.cdf")
+omni_file = joinpath(pwd(), "Data", "MAVEN", "mvn_swi_l2_coarsesvy3d_20220824_v02_r01.cdf")
 #omni_file = joinpath(pwd(), "../Data/MAVEN/mvn_swi_l2_finearc3d_20210824_v02_r00.cdf")
 data = CDFDataset(omni_file)
 
-target_time_str = "2021-08-24T07:30:00"
-start_time_str = "2021-08-24T06:00:00"
-end_time_str = "2021-08-24T09:00:00"
+target_time_str = "2022-08-24T07:30:00"
+start_time_str = "2022-08-24T06:00:00"
+end_time_str = "2022-08-24T09:00:00"
 # 将目标时间字符串解析为 DateTime 对象
 target_dt = DateTime(target_time_str, dateformat"yyyy-mm-ddTHH:MM:SS")
 start_dt = DateTime(start_time_str, dateformat"yyyy-mm-ddTHH:MM:SS")

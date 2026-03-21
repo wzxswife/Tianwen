@@ -15,7 +15,8 @@ using .TW_load
 
 export bowshock, magnetopause
 export bowshock_plot_xr, plot_spacecraft_orbit_xr, 
-    bowshock_plot, plot_spacecraft_orbit
+    bowshock_plot, plot_spacecraft_orbit, 
+    plot_B_total, plot_B, plot_wavelet
 
 const Rm = 3389.5 # 火星半径，单位km
 
@@ -53,7 +54,7 @@ function magnetopause(xmp)
 end
 
 """
-画火星弓激波、磁层顶和火星位置
+画火星弓激波、磁层顶和火星位置（测试通过）
 """
 # 只有x_r图
 function bowshock_plot_xr(ax)
@@ -130,7 +131,7 @@ function bowshock_plot(ax1, ax2, ax3)
 end
 
 """
-画航天器轨道，和航天器位置
+画航天器轨道，和航天器位置（测试通过）
 """
 function plot_spacecraft_orbit_xr(ax, data, time_range)
     xlims!(ax, -5, 5) 
@@ -202,20 +203,54 @@ function plot_spacecraft_orbit(ax1, ax2, ax3, data, time_range)
 end
 
 """
-画磁场数据
+画磁场数据（测试通过）
 """
 # 总磁场大小
-
-
+function plot_B_total(ax, data, time_range)
+    local dataB = find_avail_data(data, time_range, 
+        [:epoch, :B_total, :JulUTtime])
+    xtk = datetime2julian.(time_range)
+    # xtk = xtk .- data[:JulUTtime][1]
+    xlims!(ax, xtk[1], xtk[end])
+    ylims!(ax, minimum(dataB[:B_total])-1.0, maximum(dataB[:B_total])+1.0)
+    lines!(ax, dataB[:JulUTtime], dataB[:B_total]; 
+        label = L"$B_{\mathrm{total}}$", color=:black, linewidth=1.5, overdraw = true)
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM"))
+end
 # 磁场三分量
-
+function plot_B(ax, data, time_range)
+    local lw = 1.5
+    local dataB = find_avail_data(data, time_range, 
+        [:epoch, :B, :JulUTtime])
+    local xtk = datetime2julian.(time_range)
+    # xtk = xtk .- data[:JulUTtime][1]
+    xlims!(ax, xtk[1], xtk[end])
+    ylims!(ax, minimum(dataB[:B])-1.0, maximum(dataB[:B])+1.0)
+    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 1]; 
+        label = L"$B_{\mathrm{x}}$", linewidth=lw, overdraw = true)
+    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 2]; 
+        label = L"$B_{\mathrm{y}}$", linewidth=lw, overdraw = true)
+    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 3]; 
+        label = L"$B_{\mathrm{z}}$", linewidth=lw, overdraw = true)
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM"))
+end
 
 """
-磁场wavelet频谱图
+磁场wavelet频谱图（测试通过）
 """
-
+function plot_wavelet(fig, i, time_data, time_range, Bpower, period, dt)
+    # ax = Axis(fig[i,1:3], xlabel = "UT", ylabel = L"Period $T$ (s)", yscale=log2)
+    local xtk = datetime2julian.(time_range)
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM"))
+    xlims!(ax, minimum(xtk), maximum(xtk)) 
+    ylims!(ax, 2*dt, 128*dt)
+    ax.yreversed = true
+    local hp1 = heatmap!(ax, time_data, period, Bpower', 
+        colorscale=log10, colormap=:gist_earth, colorrange=(2e-2, 3e2))
+    tightlimits!(ax)
+    Colorbar(fig[i, 4], hp1, label = L"Wavelet Power $P_{\mathrm{B}}$")
+end
 
 
 
 end
-
