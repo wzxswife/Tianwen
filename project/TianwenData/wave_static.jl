@@ -9,18 +9,23 @@ using Wavelets
 using FFTW
 using Statistics
 using CSV
-include("TCWavelet.jl")
+include("../../src/scripts/TCWavelet.jl")
 
-df = CSV.read("E:/work/Tianwen/Picture/1Hz Waves.csv", DataFrame)
+dir = joinpath(@__DIR__, "..", "..")
+data_path = joinpath(dir, "Data")
+out_path = joinpath(dir, "Results")
+data_name = joinpath(data_path, "1HzWaves.csv")
+out_file = joinpath(out_path, "test.csv")
+df = CSV.read(data_name, DataFrame)
 
 const Rm = 3390.0  #km 
-datapath2c32hz = "E:/work/Tianwen/Data/32Hz/"
+datapath2c32hz = joinpath(data_path, "32Hz")
 for i=1:(size(df)[1])
     # read data
     date = df[i, :DateTime]
     datestr = Dates.format.(date, "yyyymmdd")
-    file2c32hz = datapath2c32hz * "TW1_MOMAG_MSO_32Hz_" * datestr * "_2C_v03.dat"
-    println("Reading file: ")
+    file_name = "TW1_MOMAG_MSO_32Hz_" * datestr * "_2C_v03.dat"
+    file2c32hz = joinpath(datapath2c32hz, file_name)
     println(file2c32hz)
     global mag2c32hz = identity.(DataFrame(readdlm(file2c32hz, skipstart=19), :auto))
     name = ["Time", "Sampling_Rate", "X_MSO", "Y_MSO", "Z_MSO", "Probe_Position_X_MSO", "Probe_Position_Y_MSO", 
@@ -196,5 +201,5 @@ for i=1:(size(df)[1])
         magback=round(magback,digits = 3),
         maxAmplitude=round(maxAm,digits = 3)
     )
-    CSV.write("E:/work/Tianwen/Picture/test.csv", dfStatic, append=true, header=false)
+    CSV.write(out_file, dfStatic, append=true, header=false)
 end

@@ -215,7 +215,7 @@ function plot_B_total(ax, data, time_range)
     ylims!(ax, minimum(dataB[:B_total])-1.0, maximum(dataB[:B_total])+1.0)
     lines!(ax, dataB[:JulUTtime], dataB[:B_total]; 
         label = L"$B_{\mathrm{total}}$", color=:black, linewidth=1.5, overdraw = true)
-    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM"))
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
 # 磁场三分量
 function plot_B(ax, data, time_range)
@@ -232,7 +232,7 @@ function plot_B(ax, data, time_range)
         label = L"$B_{\mathrm{y}}$", linewidth=lw, overdraw = true)
     lines!(ax, dataB[:JulUTtime], dataB[:B][:, 3]; 
         label = L"$B_{\mathrm{z}}$", linewidth=lw, overdraw = true)
-    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM"))
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
 
 """
@@ -241,7 +241,7 @@ end
 function plot_wavelet(fig, i, time_data, time_range, Bpower, period, dt)
     # ax = Axis(fig[i,1:3], xlabel = "UT", ylabel = L"Period $T$ (s)", yscale=log2)
     local xtk = datetime2julian.(time_range)
-    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM"))
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
     xlims!(ax, minimum(xtk), maximum(xtk)) 
     ylims!(ax, 2*dt, 128*dt)
     ax.yreversed = true
@@ -250,7 +250,5 @@ function plot_wavelet(fig, i, time_data, time_range, Bpower, period, dt)
     tightlimits!(ax)
     Colorbar(fig[i, 4], hp1, label = L"Wavelet Power $P_{\mathrm{B}}$")
 end
-
-
 
 end
