@@ -22,6 +22,7 @@ export sta_heatmap, STA_2d_slip, SWEA_PAD_heatmap, WaveSpactra_heatmap, Orbit
 export PAD_slice, PAD_slice_polar, PAD_slice_velocity
 export VDF_2d_slip, VDF_2d_mask
 export time2x, time_ticks, x_ticks
+export swi_heatmap
 function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     # 转接vspan函数,y需要为bool值
     segments1 = []
@@ -45,6 +46,24 @@ function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     vspan!(ax, segments1, segments2; krawg...)
     return ax
 end
+
+function swi_heatmap(fig, i, data, time_range)
+    time_idx = findall(minimum(time_range) .< data[:epoch] .< maximum(time_range))
+    flux_4d = data[:diff_en_fluxes][time_idx, :, :, :] 
+    energies = data[:energy_coarse][:] ./ 1000
+    epochs = data[:epoch][time_idx]          
+    flux_2d = dropdims(mean(flux_4d, dims=(2,3)), dims=(2,3))
+
+    ax = Axis(fig[i, 1:3], xlabel="UT", ylabel=L"Energy (keV)", yscale=log10)
+    xtk = datetime2julian.(time_range)
+    time_data = datetime2julian.(epochs)
+    hm = heatmap!(ax, time_data, energies, flux_2d, 
+        colorscale=log10, colormap=:gist_earth, colorrange=(1e3, 1e8))
+    Colorbar(fig[i, 4], hm; label = L"Differential Energy Flux (cm² s sr keV)⁻¹",
+        width = 15)
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+end
+
 function sta_heatmap_test(ax, sta_data; unit="eflux", c_range=(1e4, 1e10), colormap=:viridis, colorscale=log10, overdraw=true,sc_correction = false,krawg...)
     swp_ind = sta_data[:swp_ind]; unique_swp_ind = unique(swp_ind)
     epoch = sta_data[:epoch] ; x, time_i = time2x(x0, x_range)

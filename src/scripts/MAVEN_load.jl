@@ -193,6 +193,8 @@ function load_mag_l2(file::String)
     @inbounds for (i, line) in enumerate(lines)
         times[i], B[i, :], position[i, :] = get_data_from_line_for_mag_read(line)
     end
+    
+    julUTtimes = datetime2julian.(times)
 
     B_total = sqrt.(sum(B .^ 2, dims=2))
     B_total = B_total[:, 1]
@@ -202,6 +204,7 @@ function load_mag_l2(file::String)
         # "Var name" => "time[Ntime], B_total[Ntime],B[Ntime,3],position[Ntime,3]",
         # "Vars" => [times, B_total, B, position],
         :epoch => times,
+        :JulUTtime => julUTtimes,
         :type => type,
         :B_total => B_total,
         :B => B,

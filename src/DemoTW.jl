@@ -47,13 +47,13 @@ save(joinpath(@__DIR__, "TW1_32Hz_B_total.png"), fig3)
 
 println("Drawing...")
 fig4 = Figure(resolution=(800, 1200))
-ax41 = Axis(fig[1,1], aspect=DataAspect(), xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
+ax41 = Axis(fig4[1,1], aspect=DataAspect(), xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
     ylabel=L"$\sqrt{y^2+z^2}$ ($R_{\mathrm{M}}$)", 
     xticks=range(-10, 10), yticks=range(-10, 10))
-ax42 = Axis(fig[2,1], aspect=DataAspect(), xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
+ax42 = Axis(fig4[2,1], aspect=DataAspect(), xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
     ylabel=L"$\sqrt{y^2+z^2}$ ($R_{\mathrm{M}}$)", 
     xticks=range(-10, 10), yticks=range(-10, 10))
-ax43 = Axis(fig[3,1], aspect=DataAspect(), xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
+ax43 = Axis(fig4[3,1], aspect=DataAspect(), xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
     ylabel=L"$\sqrt{y^2+z^2}$ ($R_{\mathrm{M}}$)", 
     xticks=range(-10, 10), yticks=range(-10, 10))
 bowshock_plot(ax41, ax42, ax43)

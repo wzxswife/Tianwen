@@ -145,7 +145,7 @@ function plot_spacecraft_orbit_xr(ax, data, time_range)
         local ind = findfirst(x-> x<time && x>time-Dates.Second(1), 
             data[:epoch])
         local str = Dates.format(time, "HH:MM")
-        print("Time: $time, Index: $ind /n")
+        # println("Time: $time, Index: $ind /n")
         if ind !== nothing
             scatter!(ax, data[:position][ind, 1], 
                 sqrt.(data[:position][ind, 2].^2+data[:position][ind, 3].^2); 
@@ -177,7 +177,7 @@ function plot_spacecraft_orbit(ax1, ax2, ax3, data, time_range)
         local ind = findfirst(x-> x<time && x>time-Dates.Second(1), 
             data[:epoch])
         local str = Dates.format(time, "HH:MM")
-        print("Time: $time, Index: $ind /n")
+        # println("Time: $time, Index: $ind /n")
         if ind !== nothing
             scatter!(ax1, data[:position][ind, 1], 
                 sqrt.(data[:position][ind, 2].^2+data[:position][ind, 3].^2); 
@@ -207,30 +207,34 @@ end
 """
 # 总磁场大小
 function plot_B_total(ax, data, time_range)
+    local lw = 0.8
     local dataB = find_avail_data(data, time_range, 
         [:epoch, :B_total, :JulUTtime])
-    xtk = datetime2julian.(time_range)
-    # xtk = xtk .- data[:JulUTtime][1]
+    local xtk = datetime2julian.(time_range)
+    local t0 = dataB[:JulUTtime][1]
+    xtk = xtk .- t0
     xlims!(ax, xtk[1], xtk[end])
     ylims!(ax, minimum(dataB[:B_total])-1.0, maximum(dataB[:B_total])+1.0)
-    lines!(ax, dataB[:JulUTtime], dataB[:B_total]; 
-        label = L"$B_{\mathrm{total}}$", color=:black, linewidth=1.5, overdraw = true)
+    lines!(ax, dataB[:JulUTtime].-t0, dataB[:B_total]; 
+        label = L"$B_{\mathrm{total}}$", 
+        color=:black, linewidth=lw, overdraw = true)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
 # 磁场三分量
 function plot_B(ax, data, time_range)
-    local lw = 1.5
+    local lw = 0.8
     local dataB = find_avail_data(data, time_range, 
         [:epoch, :B, :JulUTtime])
     local xtk = datetime2julian.(time_range)
-    # xtk = xtk .- data[:JulUTtime][1]
+    local t0 = dataB[:JulUTtime][1]
+    xtk = xtk .- t0
     xlims!(ax, xtk[1], xtk[end])
     ylims!(ax, minimum(dataB[:B])-1.0, maximum(dataB[:B])+1.0)
-    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 1]; 
+    lines!(ax, dataB[:JulUTtime].-t0, dataB[:B][:, 1]; 
         label = L"$B_{\mathrm{x}}$", linewidth=lw, overdraw = true)
-    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 2]; 
+    lines!(ax, dataB[:JulUTtime].-t0, dataB[:B][:, 2]; 
         label = L"$B_{\mathrm{y}}$", linewidth=lw, overdraw = true)
-    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 3]; 
+    lines!(ax, dataB[:JulUTtime].-t0, dataB[:B][:, 3]; 
         label = L"$B_{\mathrm{z}}$", linewidth=lw, overdraw = true)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
@@ -239,11 +243,11 @@ end
 磁场wavelet频谱图（测试通过）
 """
 function plot_wavelet(fig, i, time_data, time_range, Bpower, period, dt)
-    # ax = Axis(fig[i,1:3], xlabel = "UT", ylabel = L"Period $T$ (s)", yscale=log2)
+    ax = Axis(fig[i,1:3], xlabel = "UT", ylabel = L"Period $T$ (s)", yscale=log2)
     local xtk = datetime2julian.(time_range)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
     xlims!(ax, minimum(xtk), maximum(xtk)) 
-    ylims!(ax, 2*dt, 128*dt)
+    ylims!(ax, 2*dt, 256*dt)
     ax.yreversed = true
     local hp1 = heatmap!(ax, time_data, period, Bpower', 
         colorscale=log10, colormap=:gist_earth, colorrange=(2e-2, 3e2))
