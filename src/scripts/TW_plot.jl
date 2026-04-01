@@ -184,19 +184,19 @@ function plot_spacecraft_orbit(ax1, ax2, ax3, data, time_range)
                 color=ti, colorrange=(1, len), colormap=:tab10, 
                 markersize=10)
             text!(ax1, 0.9, 0.9-ti*0.1, text = str, font = :bold, 
-                align = (:center, :center), space = :relative, fontsize = 25, 
+                align = (:center, :center), space = :relative, fontsize = 24, 
                 color=ti, colorrange=(1, len), colormap=:tab10)
             scatter!(ax2, data[:position][ind, 1], data[:position][ind, 2]; 
                 color=ti, colorrange=(1, len), colormap=:tab10, 
                 markersize=10)
             text!(ax2, 0.9, 0.9-ti*0.1, text = str, font = :bold, 
-                align = (:center, :center), space = :relative, fontsize = 25, 
+                align = (:center, :center), space = :relative, fontsize = 24, 
                 color=ti, colorrange=(1, len), colormap=:tab10)
             scatter!(ax3, data[:position][ind, 1], data[:position][ind, 3]; 
                 color=ti, colorrange=(1, len), colormap=:tab10, 
                 markersize=10)
             text!(ax3, 0.9, 0.9-ti*0.1, text = str, font = :bold, 
-                align = (:center, :center), space = :relative, fontsize = 25, 
+                align = (:center, :center), space = :relative, fontsize = 24, 
                 color=ti, colorrange=(1, len), colormap=:tab10)
         end
     end
@@ -242,17 +242,20 @@ end
 """
 磁场wavelet频谱图（测试通过）
 """
-function plot_wavelet(fig, i, time_data, time_range, Bpower, period, dt)
-    ax = Axis(fig[i,1:3], xlabel = "UT", ylabel = L"Period $T$ (s)", yscale=log2)
+function plot_wavelet(ax, data, time_range, dt;
+    colorscale=log10, colormap=:gist_earth, colorrange=(2e-2, 3e2))
+    local avail_data = find_avail_data(data, time_range, [:epoch, :JulUTtime, :B])
+    local Bpower, period = caculate_wavelet(avail_data[:B], dt)
+    local time_data = avail_data[:JulUTtime]
     local xtk = datetime2julian.(time_range)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
     xlims!(ax, minimum(xtk), maximum(xtk)) 
     ylims!(ax, 2*dt, 256*dt)
     ax.yreversed = true
-    local hp1 = heatmap!(ax, time_data, period, Bpower', 
-        colorscale=log10, colormap=:gist_earth, colorrange=(2e-2, 3e2))
+    local hp = heatmap!(ax, time_data, period, Bpower', 
+        colorscale=colorscale, colormap=colormap, colorrange=colorrange)
     tightlimits!(ax)
-    Colorbar(fig[i, 4], hp1, label = L"Wavelet Power $P_{\mathrm{B}}$")
+    return hp
 end
 
 end
