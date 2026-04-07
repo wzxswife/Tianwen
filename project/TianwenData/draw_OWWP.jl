@@ -4,10 +4,10 @@ using Statistics
 using LinearAlgebra
 
 include("../../src/scripts/TW_load.jl")
-include("../../src/scripts/TW_plot.jl")
+include("../../src/scripts/MAG_plot.jl")
 include("../../src/scripts/wave_caculate.jl")
 using .TW_load
-using .TW_plot
+using .MAG_plot
 using .WaveCaculate
 
 const Rm = 3389.5 # 火星半径，单位km

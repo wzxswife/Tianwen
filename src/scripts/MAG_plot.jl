@@ -1,9 +1,10 @@
 # 绘制Tianwen相关图像
 
-module TW_plot
+module MAG_plot
 using Dates
 using DelimitedFiles
 using Interpolations
+using Statistics
 using LinearAlgebra
 using DSP
 using Wavelets
@@ -17,6 +18,9 @@ export bowshock, magnetopause
 export bowshock_plot_xr, plot_spacecraft_orbit_xr, 
     bowshock_plot, plot_spacecraft_orbit, 
     plot_B_total, plot_B, plot_wavelet
+export mag_wave, smooth_data
+export MVA, plot_MVA, plot_MVA_time
+
 
 const Rm = 3389.5 # 火星半径，单位km
 
@@ -51,6 +55,33 @@ function magnetopause(xmp)
     L = 0.90
     temp = (ϵ^2-1.0)*(xmp-xF)^2 - 2ϵ*L*(xmp-xF) + L^2
     return temp >= 0 ? sqrt(temp) : Inf64
+end
+
+function mag_wave(mag_data::Dict, time_range::Vector{DateTime})
+    local mag_wave = find_avail_data(mag_data, time_range, [:B])
+    mag_wave = convert.(Float64, mag_wave[:B])
+    local bmean = mean(mag_wave, dims=1)
+    local bwave = mag_wave .- bmean
+    return bwave
+end
+
+function smooth_data(data::Matrix{Float64}, window::Int)
+    local n = size(data, 1)
+    local smoothed = similar(data)
+    local half_window = window ÷ 2
+    for i in 1:n
+        start_idx = max(1, i - half_window)
+        end_idx = min(n, i + half_window)
+        smoothed[i, :] = mean(data[start_idx:end_idx, :], dims=1)
+    end
+    return smoothed
+end
+
+function MVA(magbc)
+    local nb = length(magbc[:, 1])
+    local bm = mean(magbc, dims=1)
+    local muv = magbc' * magbc ./ nb - bm' * bm
+    return eigen(muv)
 end
 
 """
@@ -256,6 +287,88 @@ function plot_wavelet(ax, data, time_range, dt;
         colorscale=colorscale, colormap=colormap, colorrange=colorrange)
     tightlimits!(ax)
     return hp
+end
+
+function plot_phase(ax, data::Dict, time_range; 
+    lw=2, ms=20,smooth_window=10)
+    local avail_data = find_avail_data(data, time_range, [:epoch, :JulUTtime, :B])
+    if smooth_window > 1
+        b_data = smooth_data(avail_data[:B], smooth_window)
+    end
+end
+
+function plot_MVA(ax1, ax2, ax3, mag_wave::Matrix{Float64}; 
+    color=(0.2, 0.3, 0.7), lw=2, ms=20, smooth_window=10)
+    local bm = MVA(mag_wave)
+    local min_hat = bm.vectors[:, 1]
+    local mid_hat = bm.vectors[:, 2]
+    local max_hat = bm.vectors[:, 3]
+    local R = [max_hat mid_hat min_hat]
+    local bWaveMVA = mag_wave * R 
+    if smooth_window > 1
+        bWaveMVA = smooth_data(bWaveMVA, smooth_window)
+    end
+
+    local lims_max = ceil(maximum(abs.(bWaveMVA)))
+    local lims_min = -lims_max
+    ax1.xlabel = "B min"
+    ax1.ylabel = "B mid"
+    ax2.xlabel = "B min"
+    ax2.ylabel = "B max"
+    ax3.xlabel = "B mid"
+    ax3.ylabel = "B max"
+
+    limits!(ax1, lims_min, lims_max, lims_min, lims_max)
+    limits!(ax2, lims_min, lims_max, lims_min, lims_max)
+    limits!(ax3, lims_min, lims_max, lims_min, lims_max)
+    lines!(ax1, bWaveMVA[:, 3], bWaveMVA[:, 1], color=color, linewidth=lw)
+    lines!(ax2, bWaveMVA[:, 3], bWaveMVA[:, 2], color=color, linewidth=lw)
+    lines!(ax3, bWaveMVA[:, 1], bWaveMVA[:, 2], color=color, linewidth=lw)
+    scatter!(ax1, [bWaveMVA[1, 3]], [bWaveMVA[1, 1]], 
+        color=:lightgreen, markersize=ms, marker=:circle, strokewidth=0)
+    scatter!(ax1, [bWaveMVA[end, 3]], [bWaveMVA[end, 1]], 
+        color=:darkred, markersize=ms, marker='x')
+    scatter!(ax2, [bWaveMVA[1, 3]], [bWaveMVA[1, 2]], 
+        color=:lightgreen, markersize=ms, marker=:circle, strokewidth=0)
+    scatter!(ax2, [bWaveMVA[end, 3]], [bWaveMVA[end, 1]], 
+        color=:darkred, markersize=ms, marker='x')
+    scatter!(ax3, [bWaveMVA[1, 1]], [bWaveMVA[1, 2]], 
+        color=:lightgreen, markersize=ms, marker=:circle, strokewidth=0)
+    scatter!(ax3, [bWaveMVA[end, 1]], [bWaveMVA[end, 2]], 
+        color=:darkred, markersize=ms, marker='x')
+end
+
+function plot_MVA_time(ax1, ax2, ax3, data::Dict, time_range::Vector{DateTime};
+    color=(0.2, 0.3, 0.7), lw=1.5)
+    local mag_data = find_avail_data(data, time_range, [:epoch, :JulUTtime, :B])
+    local bwave = mag_wave(mag_data, time_range)
+    local bm = MVA(bwave)
+    local min_hat = bm.vectors[:, 1]
+    local mid_hat = bm.vectors[:, 2]
+    local max_hat = bm.vectors[:, 3]
+    local R = [max_hat mid_hat min_hat]
+    local bWaveMVA = bwave * R
+
+    local lims_max = ceil(maximum(abs.(bWaveMVA)))
+    local lims_min = -lims_max
+    local xtk = datetime2julian.(time_range)
+    local t0 = mag_data[:JulUTtime][1]
+    xtk = xtk .- t0
+    limits!(ax1, xtk[1], xtk[end], lims_min, lims_max)
+    limits!(ax2, xtk[1], xtk[end], lims_min, lims_max)
+    limits!(ax3, xtk[1], xtk[end], lims_min, lims_max)
+    # ylims!(ax1, lims_min, lims_max)
+    # ylims!(ax2, lims_min, lims_max)
+    # ylims!(ax3, lims_min, lims_max)
+    lines!(ax1, mag_data[:JulUTtime].-t0, bWaveMVA[:, 1], 
+        label = L"$B_{\mathrm{max}}$", color=color, linewidth=lw)
+    lines!(ax2, mag_data[:JulUTtime].-t0, bWaveMVA[:, 2], 
+        label = L"$B_{\mathrm{mid}}$", color=color, linewidth=lw)
+    lines!(ax3, mag_data[:JulUTtime].-t0, bWaveMVA[:, 3], 
+        label = L"$B_{\mathrm{min}}$", color=color, linewidth=lw)
+    ax1.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    ax2.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    ax3.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
 
 end

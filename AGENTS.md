@@ -1,184 +1,135 @@
 # Tianwen Repository Agent Guidelines
 
-This repository contains Julia code for space physics data analysis, focusing on MAVEN spacecraft and Tianwen-1 mission magnetic field and plasma data.
+Julia codebase for space physics data analysis — MAVEN spacecraft and Tianwen-1 mission magnetic field & plasma data.
 
 ## Project Structure
 
 ```
 Tianwen/
-├── src/                      # Main entry points and demo scripts
-│   ├── scripts/              # Reusable modules (load, plot, calculate)
-│   │   ├── MAVEN_load.jl     # MAVEN data loading module
-│   │   ├── TW_load.jl        # Tianwen data loading module
-│   │   ├── MAVEN_plot.jl     # MAVEN plotting functions
-│   │   ├── TW_plot.jl        # Tianwen plotting functions
-│   │   ├── MVA_plot.jl       # Minimum Variance Analysis plotting
-│   │   ├── wave_caculate.jl  # Wave analysis calculations
-│   │   └── TCWavelet.jl       # Wavelet transform
-│   ├── DemoMAVEN.jl           # MAVEN demo script
-│   └── DemoTW.jl              # Tianwen demo script
-├── Project/                   # Sub-projects
-│   ├── IonBeam/              # Ion beam analysis
-│   └── TianwenData/          # Tianwen data processing
-├── data/                      # Data files (gitignored)
-└── Results/                   # Output results
+├── src/
+│   ├── scripts/              # Reusable modules
+│   │   ├── MAVEN_load.jl     # MAVEN data loading (CDF, STS, Fortran binary, JLD2)
+│   │   ├── MAVEN_plot.jl     # MAVEN plotting (VDF, PAD, heatmap, orbit)
+│   │   ├── MAVEN_SWIA.jl     # SWIA instrument data
+│   │   ├── MAVEN_SWEA.jl     # SWEA instrument data
+│   │   ├── MAVEN_STATIC.jl   # STATIC instrument data
+│   │   ├── TW_load.jl        # Tianwen-1 data loading
+│   │   ├── TW_plot.jl        # Tianwen-1 plotting (bowshock, wavelet, orbit)
+│   │   ├── MVA_plot.jl       # Minimum Variance Analysis
+│   │   ├── wave_caculate.jl  # Wave analysis (PSD, MVA, dominant frequency)
+│   │   └── TCWavelet.jl      # Custom wavelet transform (Torrence & Compo)
+│   ├── DemoMAVEN.jl          # MAVEN entry point
+│   ├── DemoTW.jl             # Tianwen-1 entry point
+│   └── *.jl / *.ipynb        # Standalone analysis scripts
+├── Project/
+│   ├── IonBeam/              # Ion beam VDF analysis
+│   └── TianwenData/          # Tianwen-specific processing (bowshock, wave stats, polar)
+├── Data/                     # Raw data (gitignored)
+├── Results/                  # Output plots/CSVs (gitignored)
+├── Doc/                      # Reference docs, PDFs, skeleton tables
+└── workflows/                # (gitignored)
 ```
 
 ## Running Scripts
 
 ```bash
-# Run a demo script directly
+# No Project.toml exists — scripts use global Julia environment
 julia src/DemoMAVEN.jl
+julia src/DemoTW.jl
 
-# Run with specific data path
-julia --project=. src/scripts/MVA_plot.jl
+# Run individual script
+julia src/scripts/MVA_plot.jl
 ```
 
-## Code Style Guidelines
+## Critical Gotchas
 
-### Module Organization
-- Use `module` to define namespaces (e.g., `MAVEN_load`, `TW_plot`)
-- Use `export` to define public API
-- Use `include()` for loading dependent modules
-- Use `.ModuleName` syntax when accessing submodules
+### No Project.toml
+This repo has **no** `Project.toml`. All packages must be installed in the global environment. Do NOT add `--project=.` or try to instantiate.
 
-```julia
-module MAVEN_load
-using Dates, DataFrames
-export load_mag_l2, load_cdf
+### Hardcoded Path in TW_load.jl
+`TW_load.jl` line 5: `root_path = "E:/Tianwen-1/"` — hardcoded Windows path. If running on a different machine, this must be updated.
 
-include("helper_functions.jl")
-# ... module content ...
-end
-```
+### Data Directory Case Mismatch
+`.gitignore` lists `results` (lowercase) but actual directory is `Results/`. Same for `Data/`. Data is expected at:
+- MAVEN: `Data/MAVEN/` (STS files)
+- Tianwen: `Data/32Hz/` (DAT files)
 
-### Data Structures
-- Use `Dict{Symbol, Any}()` for data containers (consistent with CDF/spacescraft data formats)
-- Access fields with Symbol keys: `data[:epoch]`, `data[:B]`
-- Include `:data_load_flag` to indicate successful loading
+### MAVEN_load.jl Quirk
+Lines 8-18 have `using` statements **outside** the `module MAVEN_load` block. The module then re-declares its own `using` inside. This is intentional — the outer imports are for top-level test usage.
 
+## Data Patterns
+
+### Data Container
+All data loading returns `Dict{Symbol, Any}()` with these standard keys:
 ```julia
 data = Dict{Symbol,Any}(
-    :epoch => times,
-    :B => B,
-    :position => position,
-    :data_load_flag => true
+    :epoch => times,           # DateTime vector
+    :B => B,                   # N×3 magnetic field matrix (nT)
+    :position => position,     # N×3 position matrix (km, MSO coords)
+    :B_total => B_total,       # N-element total field magnitude
+    :data_load_flag => true,   # false on load failure
 )
 ```
 
-### Function Naming
-- Use snake_case for function names: `load_mag_l2`, `plot_wavelet`
-- Use PascalCase for types and modules
-- Be descriptive but concise
-
-### Type Annotations
-- Annotate function parameters with types when beneficial:
+### Position Normalization
+Position is loaded in km, normalized to Mars radii **after** loading:
 ```julia
-function load_mag_l2(file::String)
-function plot_MVA(ax1, ax2, ax3, mag_wave::Matrix{Float64}; smooth_window::Int=10)
+data[:position] ./= 3390.0   # or 3393.5 depending on context
 ```
-- Use parametric types when appropriate: `Vector{T}` where T is a type parameter
+Mars radius constants used across codebase: `3390.0`, `3393.5`, `3389.5` — pick the one matching the module you're in.
 
-### Imports
-- Standard library imports first, then external packages
-- Import only what's needed to avoid namespace pollution
+### Coordinate System
+All positions in **MSO** (Mars Solar Orbital): X sunward, Y opposite orbital motion, Z completes right-hand system.
 
+### Time Range Slicing
+Standard pattern to extract a time window:
 ```julia
-using Dates
-using Statistics
-using LinearAlgebra
-using CairoMakie, GeometryBasics
-```
-
-### Constants
-- Define physical constants at module level in UPPER_SNAKE_CASE:
-```julia
-const Rm = 3390.0  # Mars radius in km
-const Me = 9.109e-31  # Electron mass in kg
-```
-
-### Plotting (CairoMakie)
-- Activate CairoMakie before plotting: `CairoMakie.activate!()`
-- Use named parameters for clarity:
-```julia
-lines!(ax, x, y; color=:blue, linewidth=2, label="data")
-scatter!(ax, x, y; markersize=10, color=:red)
-```
-- Use LaTeXStrings for mathematical labels: `xlabel = L"B_{min}"`
-- Use `limits!()` to set axis limits, `hidespines!()` for clean axes
-
-### Error Handling
-- Return `Dict(:data_load_flag => false)` on load failure rather than throwing
-- Use try-catch for file operations:
-```julia
-try
-    cdf_data = CDFDataset(file)
-catch e
-    println("Error loading: ", file)
-    return Dict(:data_load_flag => false)
-end
-```
-
-### Documentation
-- Use Chinese comments for function descriptions (matches existing codebase)
-- Document input parameters and return values
-```julia
-"""
-    load_mag_l2(file::String)
-加载MAVEN磁力计L2数据
-输入: file - 文件路径
-返回: Dict包含:epoch, B, position, data_load_flag
-"""
-```
-
-### Code Formatting
-- 4 spaces for indentation (Julia standard)
-- No trailing whitespace
-- Maximum line length: 120 characters
-- Use `begin`/`end` blocks for multi-line expressions when needed
-- Use broadcasting (`.`) for element-wise operations: `sqrt.(x)`
-
-## Common Patterns
-
-### Time Range Selection
-```julia
-time_range = DateTime(date, Time(7, 30, 00)) .+ Dates.Second(10) .* range(0, 4)
-```
-
-### Finding Available Data
-```julia
+time_range = shock_time - Dates.Minute(1) .+ Dates.Minute(1) .* range(0, 3)
 mag_data = find_avail_data(data, time_range, [:epoch, :B])
 ```
+`find_avail_data` (in `TW_load.jl`) also filters NaN rows from position and B.
 
-### Preallocating Arrays
-```julia
-B = Matrix{Float32}(undef, nums, 3)
-@inbounds for (i, line) in enumerate(lines)
-    # process line
-end
-```
+### File Formats
+| Format | Used For |
+|--------|----------|
+| `.sts` | MAVEN mag L2 (fixed-width text, skip header to "END" line) |
+| `.dat` | Tianwen MOMAG (space-delimited, skip 19 header lines) |
+| Fortran binary | MAVEN mag L3, STATIC d1/c6 data |
+| `.cdf` | MAVEN SWEA, SWIA, KP data |
+| `.jld2` | Pre-processed NGIMS, KP L3 data |
 
-### Unit Conversions
-- Position typically normalized to Mars radii (Rm = 3390 km)
-- Magnetic field in nT
-- Energy in eV
-- Use defined constants: `const Rm = 3390.0`
+## Plotting (CairoMakie)
+
+- Headless backend — no display needed, use `save("output.png", fig)`
+- Always activate: `CairoMakie.activate!()`
+- Use LaTeXStrings for math labels: `L"B_{\mathrm{min}}"`
+- Use `limits!()` and `hidespines!()` for clean axes
+- Named parameters: `lines!(ax, x, y; color=:blue, linewidth=2)`
 
 ## Dependencies
 
-Key packages used in this codebase:
-- `CairoMakie` - Publication-quality plotting
-- `GeometryBasics` - Geometric data structures
-- `LaTeXStrings` - LaTeX formatting in plots
-- `Dates` - Date/time handling
-- `DataFrames` - Tabular data
-- `DSP`, `Wavelets` - Signal processing
-- `LinearAlgebra`, `Statistics` - Math operations
-- `CommonDataFormat` - CDF file handling
-- `FortranFiles` - Reading FORTRAN binary data
+Core packages (must be in global environment):
+- `CairoMakie`, `GeometryBasics`, `LaTeXStrings` — plotting
+- `TimesDates`, `Dates`, `DataFrames` — time/data handling
+- `DSP`, `Wavelets`, `FFTW` — signal processing
+- `LinearAlgebra`, `Statistics` — math
+- `CommonDataFormat` — CDF file reading
+- `FortranFiles` — Fortran binary reading
+- `JLD2` — Julia data serialization
+- `Rotations` — quaternion/rotation handling
+- `Optim`, `SpecialFunctions` — wavelet significance testing
+- `DataInterpolations`, `DelaunayTriangulation`, `ProgressMeter`, `ColorTypes` — MAVEN plotting
+
+## Code Conventions
+
+- Chinese comments for docstrings (matches existing codebase)
+- `snake_case` for functions, `PascalCase` for modules/types
+- Error handling: return `Dict(:data_load_flag => false)` rather than throwing
+- Preallocate arrays with `Matrix{Float32}(undef, n, m)` + `@inbounds` loops
+- Broadcasting for element-wise ops: `sqrt.(x)`
 
 ## Notes
 
-- No formal test suite exists; validate changes with demo scripts
-- Data files are gitignored; download from NASA/USTC data portals
-- Scripts use relative paths with `joinpath(@__DIR__, "..", "data", ...)`
+- No test suite exists — validate with demo scripts
+- Data files are gitignored; download from NASA/USTC portals (see README.md links)
+- Scripts use relative paths: `joinpath(@__DIR__, "..", "Data", ...)`

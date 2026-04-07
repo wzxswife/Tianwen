@@ -3,7 +3,6 @@ using ColorTypes, CairoMakie
 using Makie.GeometryBasics
 using LaTeXStrings
 using TimesDates, Dates
-using DataFrames
 using DataInterpolations
 using LinearAlgebra
 using Statistics
@@ -18,10 +17,10 @@ const E0 = 511.0 # 电子静止能量KeV
 const RAD = π / 180
 
 # -------------------------Export parts-------------------------
-export sta_heatmap, STA_2d_slip, SWEA_PAD_heatmap, WaveSpactra_heatmap, Orbit
+export sta_heatmap, STA_2d_slip, SWEA_PAD_heatmap, Orbit
 export PAD_slice, PAD_slice_polar, PAD_slice_velocity
 export VDF_2d_slip, VDF_2d_mask
-export time2x, time_ticks, x_ticks
+export time2x, time_ticks
 export swi_heatmap
 function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     # 转接vspan函数,y需要为bool值

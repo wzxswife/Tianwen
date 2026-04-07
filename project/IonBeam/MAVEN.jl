@@ -1,17 +1,16 @@
 using Dates
-using DataFrames
 using Statistics
 using LinearAlgebra
 
 include("../../src/scripts/MAVEN_load.jl")
 include("../../src/scripts/MAVEN_plot.jl")
 include("../../src/scripts/TW_load.jl")
-include("../../src/scripts/TW_plot.jl")
+include("../../src/scripts/MAG_plot.jl")
 include("../../src/scripts/wave_caculate.jl")
 using .MAVEN_load
 using .MAVEN_plot
 using .TW_load
-using .TW_plot
+using .MAG_plot
 using .WaveCaculate
 
 const Rm = 3390.0
