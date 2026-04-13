@@ -4,10 +4,10 @@ using Statistics
 using LinearAlgebra
 
 include("./scripts/TW_load.jl")
-include("./scripts/TW_plot.jl")
+include("./scripts/MAG_plot.jl")
 include("./scripts/wave_caculate.jl")
 using .TW_load
-using .TW_plot
+using .MAG_plot
 using .WaveCaculate
 
 data_path = joinpath(@__DIR__, "..", "data", "32Hz")

@@ -4,11 +4,13 @@ using LinearAlgebra
 
 include("../../src/scripts/MAVEN_load.jl")
 include("../../src/scripts/MAVEN_plot.jl")
+include("../../src/scripts/MAVEN_SWIA.jl")
 include("../../src/scripts/TW_load.jl")
 include("../../src/scripts/MAG_plot.jl")
 include("../../src/scripts/wave_caculate.jl")
 using .MAVEN_load
 using .MAVEN_plot
+using .MAVEN_SWIA
 using .TW_load
 using .MAG_plot
 using .WaveCaculate
@@ -21,10 +23,14 @@ data_path = joinpath(dir, "data", "MAVEN")
 out_path = joinpath(dir, "Results", "MAVEN", "OWWPI")
 mag_file = "mvn_mag_l2_2022236ss_" * datestr * "_v01_r01.sts"
 swi_file = "mvn_swi_l2_coarsesvy3d_" * datestr * "_v02_r01.cdf"
+quat_file = joinpath(data_path, "mvn_spice_swia_qu_$(datestr).csv")
 
 mag_data = load_mag_l2(joinpath(data_path, mag_file))
 mag_data[:position] .= mag_data[:position] ./ Rm
+quat_data = load_quat(quat_file)
+quat_data[:data_load_flag] = true
 swi_data = load_cdf(joinpath(data_path, swi_file))
+swi_data = get_3dc!(swi_data, quat_data = quat_data)
 println("Data loaded.")
 
 start_time = DateTime(date, Time(7, 00, 00, 0))

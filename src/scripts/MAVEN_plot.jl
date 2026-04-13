@@ -21,7 +21,7 @@ export sta_heatmap, STA_2d_slip, SWEA_PAD_heatmap, Orbit
 export PAD_slice, PAD_slice_polar, PAD_slice_velocity
 export VDF_2d_slip, VDF_2d_mask
 export time2x, time_ticks
-export swi_heatmap
+export swi_heatmap, swi_pitch_angle
 function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     # 转接vspan函数,y需要为bool值
     segments1 = []
@@ -46,7 +46,7 @@ function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     return ax
 end
 
-function swi_heatmap(ax, data, time_range; 
+function swi_heatmap(ax, data::Dict, time_range::Vector{DateTime}; 
     c_range=(1e3, 1e8), colormap=:gist_earth, colorscale=log10)
     local time_idx = findall(minimum(time_range) .< data[:epoch] .< maximum(time_range))
     local flux_4d = data[:diff_en_fluxes][time_idx, :, :, :] 
@@ -61,7 +61,28 @@ function swi_heatmap(ax, data, time_range;
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
     return hm
 end
+function swi_pitch_angle(ax, data::Dict, time_range::Vector{DateTime}, 
+    energy_range::Vector{Float64}; 
+    c_range=(1e3, 1e8), colormap=:gist_earth, colorscale=log10)
+    
+    local energies = data[:energy_coarse][:] ./ 1000 
+    local pitch_angle = data[:phi][:]
+    local time_idx = findall(minimum(time_range).<data[:epoch].<maximum(time_range))
+    local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
+    local angle_idx = findall(0 .< pitch_angle .< 180)
+    local epochs = data[:epoch][time_idx]
+    local flux_4d = data[:diff_en_fluxes][time_idx, angle_idx, :, energy_idx] 
+    local flux_2d = dropdims(mean(flux_4d, dims=(3,4)), dims=(3,4))
 
+    local xtk = datetime2julian.(time_range)
+    local time_data = datetime2julian.(epochs)
+    hm = heatmap!(ax, time_data, pitch_angle[angle_idx], flux_2d, 
+        colorscale=colorscale, colormap=colormap, colorrange=c_range)
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    ax.xticklabelalign = (:center, :top)
+    ax.halign = :left
+    return hm
+end
 function sta_heatmap_test(ax, sta_data; unit="eflux", c_range=(1e4, 1e10), colormap=:viridis, colorscale=log10, overdraw=true,sc_correction = false,krawg...)
     swp_ind = sta_data[:swp_ind]; unique_swp_ind = unique(swp_ind)
     epoch = sta_data[:epoch] ; x, time_i = time2x(x0, x_range)

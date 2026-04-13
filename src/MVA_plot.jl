@@ -1,7 +1,7 @@
 using Dates
-include("MAVEN_load.jl")
-include("TW_load.jl")
-include("MAG_plot.jl")
+include("scripts/MAVEN_load.jl")
+include("scripts/TW_load.jl")
+include("scripts/MAG_plot.jl")
 using .MAVEN_load
 using .TW_load
 using .MAG_plot
@@ -10,7 +10,8 @@ using .MAG_plot
 const Rm = 3390.0
 date = Date(2022, 8, 24)
 datestr = Dates.format.(date, "yyyymmdd")
-dir = joinpath(@__DIR__, "..", "..")
+# dir = joinpath(@__DIR__, "..", "..")
+dir = pwd()
 data_path = joinpath(dir, "data", "MAVEN")
 out_path = joinpath(dir, "Results", "MAVEN", "OWWPI")
 mag_file = "mvn_mag_l2_2022236ss_" * datestr * "_v01_r01.sts"
@@ -18,7 +19,7 @@ mag_data = load_mag_l2(joinpath(data_path, mag_file))
 mag_data[:position] .= mag_data[:position] ./ Rm
 println("Data loaded.")
 
-time_range = DateTime(date, Time(7, 30, 00)) .+ Dates.Second(10) .* range(0, 4)
+time_range = DateTime(date, Time(7, 30, 00)) .+ Dates.Second(5) .* range(0, 4)
 bwave = mag_wave(mag_data, time_range)
 
 using CairoMakie, GeometryBasics, LaTeXStrings

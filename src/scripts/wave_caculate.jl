@@ -10,7 +10,7 @@ using FFTW
 include("TCWavelet.jl")
 using Wavelets
 
-export MVA, analyze_dominant_frequency, xyz_to_new_basis, angle_between
+export analyze_dominant_frequency, xyz_to_new_basis, angle_between
 
 # MVA分析，计算特征值和特征向量
 function MVA(magbc)

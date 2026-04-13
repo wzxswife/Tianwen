@@ -1,4 +1,4 @@
-# 绘制Tianwen相关图像
+# 绘制MAG相关图像
 
 module MAG_plot
 using Dates
@@ -164,7 +164,7 @@ end
 """
 画航天器轨道，和航天器位置（测试通过）
 """
-function plot_spacecraft_orbit_xr(ax, data, time_range)
+function plot_spacecraft_orbit_xr(ax, data::Dict, time_range::Vector{DateTime})
     xlims!(ax, -5, 5) 
     ylims!(ax, 0, 5)
     l3 = lines!(ax, data[:position][:, 1], 
@@ -188,7 +188,7 @@ function plot_spacecraft_orbit_xr(ax, data, time_range)
         end
     end
 end
-function plot_spacecraft_orbit(ax1, ax2, ax3, data, time_range)
+function plot_spacecraft_orbit(ax1, ax2, ax3, data::Dict, time_range::Vector{DateTime})
     xlims!(ax1, -5, 5) 
     ylims!(ax1, 0, 5)
     xlims!(ax2, -10, 10) 
@@ -237,7 +237,7 @@ end
 画磁场数据（测试通过）
 """
 # 总磁场大小
-function plot_B_total(ax, data, time_range)
+function plot_B_total(ax, data::Dict, time_range::Vector{DateTime})
     local lw = 0.8
     local dataB = find_avail_data(data, time_range, 
         [:epoch, :B_total, :JulUTtime])
@@ -252,7 +252,7 @@ function plot_B_total(ax, data, time_range)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
 # 磁场三分量
-function plot_B(ax, data, time_range)
+function plot_B(ax, data::Dict, time_range::Vector{DateTime})
     local lw = 0.8
     local dataB = find_avail_data(data, time_range, 
         [:epoch, :B, :JulUTtime])
@@ -273,7 +273,7 @@ end
 """
 磁场wavelet频谱图（测试通过）
 """
-function plot_wavelet(ax, data, time_range, dt;
+function plot_wavelet(ax, data::Dict, time_range::Vector{DateTime}, dt::Float64;
     colorscale=log10, colormap=:gist_earth, colorrange=(2e-2, 3e2))
     local avail_data = find_avail_data(data, time_range, [:epoch, :JulUTtime, :B])
     local Bpower, period = caculate_wavelet(avail_data[:B], dt)
@@ -289,12 +289,17 @@ function plot_wavelet(ax, data, time_range, dt;
     return hp
 end
 
-function plot_phase(ax, data::Dict, time_range; 
+"""
+波动极化图（未完成）
+"""
+function plot_phase(ax, data::Dict, time_range::Vector{DateTime}; 
     lw=2, ms=20,smooth_window=10)
     local avail_data = find_avail_data(data, time_range, [:epoch, :JulUTtime, :B])
+    mag_wave = mag_wave(avail_data, time_range)
     if smooth_window > 1
-        b_data = smooth_data(avail_data[:B], smooth_window)
+        b_data = smooth_data(mag_wave, smooth_window)
     end
+    
 end
 
 function plot_MVA(ax1, ax2, ax3, mag_wave::Matrix{Float64}; 
@@ -312,11 +317,11 @@ function plot_MVA(ax1, ax2, ax3, mag_wave::Matrix{Float64};
     local lims_max = ceil(maximum(abs.(bWaveMVA)))
     local lims_min = -lims_max
     ax1.xlabel = "B min"
-    ax1.ylabel = "B mid"
+    ax1.ylabel = "B max"
     ax2.xlabel = "B min"
-    ax2.ylabel = "B max"
-    ax3.xlabel = "B mid"
-    ax3.ylabel = "B max"
+    ax2.ylabel = "B mid"
+    ax3.xlabel = "B max"
+    ax3.ylabel = "B mid"
 
     limits!(ax1, lims_min, lims_max, lims_min, lims_max)
     limits!(ax2, lims_min, lims_max, lims_min, lims_max)
@@ -357,9 +362,6 @@ function plot_MVA_time(ax1, ax2, ax3, data::Dict, time_range::Vector{DateTime};
     limits!(ax1, xtk[1], xtk[end], lims_min, lims_max)
     limits!(ax2, xtk[1], xtk[end], lims_min, lims_max)
     limits!(ax3, xtk[1], xtk[end], lims_min, lims_max)
-    # ylims!(ax1, lims_min, lims_max)
-    # ylims!(ax2, lims_min, lims_max)
-    # ylims!(ax3, lims_min, lims_max)
     lines!(ax1, mag_data[:JulUTtime].-t0, bWaveMVA[:, 1], 
         label = L"$B_{\mathrm{max}}$", color=color, linewidth=lw)
     lines!(ax2, mag_data[:JulUTtime].-t0, bWaveMVA[:, 2], 
