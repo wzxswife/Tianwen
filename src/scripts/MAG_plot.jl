@@ -280,7 +280,9 @@ function plot_wavelet(ax, data::Dict, time_range::Vector{DateTime}, dt::Float64;
     local time_data = avail_data[:JulUTtime]
     local xtk = datetime2julian.(time_range)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
-    xlims!(ax, minimum(xtk), maximum(xtk)) 
+    # 扩大x轴范围，确保tick标签不被裁剪
+    xlims!(ax, xtk[1], max(xtk[end], time_data[end]))
+    # xlims!(ax, minimum(xtk), maximum(xtk)) 
     ylims!(ax, 2*dt, 256*dt)
     ax.yreversed = true
     local hp = heatmap!(ax, time_data, period, Bpower', 

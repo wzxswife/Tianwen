@@ -33,9 +33,9 @@ swi_data = load_cdf(joinpath(data_path, swi_file))
 swi_data = get_3dc!(swi_data, quat_data = quat_data)
 println("Data loaded.")
 
-start_time = DateTime(date, Time(7, 00, 00, 0))
-time_range = start_time .+ Dates.Minute(10) .* range(0, 6)
-# time_range = start_time .+ Dates.Second(10) .* range(0, 6)
+start_time = DateTime(date, Time(7, 30, 00, 0))
+# time_range = start_time .+ Dates.Minute(10) .* range(0, 6)
+time_range = start_time .+ Dates.Second(10) .* range(0, 6)
 
 using CairoMakie
 CairoMakie.activate!()
@@ -76,8 +76,6 @@ ax7 = Axis(fig[5, 1:3], xlabel="Time (UT)", ylabel=L"Energy (keV)", yscale=log10
 hm2 = swi_heatmap(ax7, swi_data, time_range)
 Colorbar(fig[5, 4], hm2; label = L"Differential Energy Flux (cm² s sr keV)⁻¹",
         width = 15)
-xtk = datetime2julian.(time_range)
-ax7.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 
 pic_name = "MAVEN_" * Dates.format(start_time, "yyyymmdd_HHMM") * ".png"
 save(joinpath(out_path, pic_name), fig)

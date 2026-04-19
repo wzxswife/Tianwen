@@ -9,6 +9,10 @@ using Statistics
 using Base.Iterators
 using DelaunayTriangulation
 using ProgressMeter
+include("MAVEN_SWIA.jl")
+include("wave_caculate.jl")
+using .MAVEN_SWIA
+using .WaveCaculate
 const EV = 1.602176487e-19
 const C = 3.0e8
 const me = 9.109e-31
@@ -21,7 +25,7 @@ export sta_heatmap, STA_2d_slip, SWEA_PAD_heatmap, Orbit
 export PAD_slice, PAD_slice_polar, PAD_slice_velocity
 export VDF_2d_slip, VDF_2d_mask
 export time2x, time_ticks
-export swi_heatmap, swi_pitch_angle
+export swi_heatmap, swi_phi_angle, swi_pitch_angle
 function vspan_plot(ax, x, y::Vector{Bool}; krawg...)
     # 转接vspan函数,y需要为bool值
     segments1 = []
@@ -59,30 +63,105 @@ function swi_heatmap(ax, data::Dict, time_range::Vector{DateTime};
     hm = heatmap!(ax, time_data, energies, flux_2d, 
         colorscale=colorscale, colormap=colormap, colorrange=c_range)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    xlims!(ax, xtk[1], xtk[end])
     return hm
 end
-function swi_pitch_angle(ax, data::Dict, time_range::Vector{DateTime}, 
-    energy_range::Vector{Float64}; 
-    c_range=(1e3, 1e8), colormap=:gist_earth, colorscale=log10)
+function swi_phi_angle(ax, data::Dict, time_range::Vector{DateTime}, 
+    energy_range::Vector{Float64}; angle_range=[0, 180],
+    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
     
     local energies = data[:energy_coarse][:] ./ 1000 
     local pitch_angle = data[:phi][:]
     local time_idx = findall(minimum(time_range).<data[:epoch].<maximum(time_range))
     local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
-    local angle_idx = findall(0 .< pitch_angle .< 180)
+    local angle_idx = findall(angle_range[1] .< pitch_angle .< angle_range[end])
     local epochs = data[:epoch][time_idx]
     local flux_4d = data[:diff_en_fluxes][time_idx, angle_idx, :, energy_idx] 
     local flux_2d = dropdims(mean(flux_4d, dims=(3,4)), dims=(3,4))
 
     local xtk = datetime2julian.(time_range)
     local time_data = datetime2julian.(epochs)
-    hm = heatmap!(ax, time_data, pitch_angle[angle_idx], flux_2d, 
+    hm = heatmap!(ax, time_data, pitch_angle[angle_idx], flux_2d,
         colorscale=colorscale, colormap=colormap, colorrange=c_range)
+    xlims!(ax, xtk[1], xtk[end])
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
-    ax.xticklabelalign = (:center, :top)
-    ax.halign = :left
+    ax.xminorticksvisible=true
+    # ax.xminorgridvisible=true
+    ax.xminorticks=IntervalsBetween(10)
+    ax.yticks = 0:30:180
     return hm
 end
+function swi_pitch_angle(ax, swi_data::Dict, mag_data::Dict, time_range::Vector{DateTime}, 
+    energy_range::Vector{Float64}; 
+    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
+    
+    local time_idx_mag = findall(minimum(time_range).<mag_data[:epoch].<maximum(time_range))
+    local mag_epochs = mag_data[:epoch][time_idx_mag]
+    local energies = swi_data[:energy][:] ./ 1000 
+    local pitch_angle = swi_data[:phi][:]
+    local time_idx = findall(minimum(time_range).<swi_data[:epoch].<maximum(time_range))
+    local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
+    local ntime = length(time_idx)
+    local nenergy = length(energy_idx)
+    local ntheta = 4
+    local nphi = 16
+    local swi_epochs = swi_data[:epoch][time_idx]
+    local flux_4d = swi_data[:diff_en_fluxes][time_idx, :, :, energy_idx]
+    local pitch_angle_4d = Array{Float64, 4}(undef, ntime, nphi, ntheta, nenergy)
+    for i in 1:ntime
+        local energy = reshape(swi_data[:energy][energy_idx],1,1,nenergy)
+        local phi = reshape(swi_data[:phi][:],nphi,1,1)
+        local theta = reshape(swi_data[:theta][time_idx[i], :, energy_idx],1,ntheta,nenergy)
+        local v0 = MAVEN_SWIA.ion_energy2v.(energy,1)
+        local vv = MAVEN_SWIA.sphere2xyz_for_SWIA.(v0,theta,phi)
+        local mag_idx = argmin(abs.(mag_epochs .- swi_epochs[i]))
+        local B = convert(Vector{Float64},mag_data[:B][mag_idx, :])
+        pitch_angle_4d[i, :, :, :] = angle_between.(vv, Ref(B))
+    end
+
+    local pitch_angle_2d = reshape(pitch_angle_4d, ntime, nphi*ntheta*nenergy)
+    local flux_2d = reshape(flux_4d, ntime, nphi*ntheta*nenergy)
+
+    # 创建 pitch angle bins (0-180度)
+    local n_bins = 60
+    local bin_edges = range(0, 180, length=n_bins+1)
+    local bin_centers = (bin_edges[1:end-1] + bin_edges[2:end]) / 2
+    # 构建热力图矩阵
+    local heatmap_data = zeros(Float64, ntime, n_bins)
+    for t in 1:ntime
+        pitch_angle_t = pitch_angle_2d[t, :]
+        flux_t = flux_2d[t, :]
+        
+        for i in 1:(nphi*ntheta*nenergy)
+            pa_val = pitch_angle_t[i]
+            flux_val = flux_t[i]
+            
+            # 找到对应的 bin
+            bin_idx = floor(Int, pa_val / 180 * n_bins) + 1
+            bin_idx = clamp(bin_idx, 1, n_bins)
+            
+            heatmap_data[t, bin_idx] += flux_val
+        end
+    end
+
+    local xtk = datetime2julian.(time_range)
+    local threshold = 1e2  # 你想设定的阈值
+    # 将小于阈值的值替换为 NaN
+    local heatmap_data_masked = ifelse.(heatmap_data .< threshold, NaN, heatmap_data)
+    hm = heatmap!(ax, xtk, range(0, 180, length=n_bins), heatmap_data_masked, 
+        colormap=colormap, colorscale=colorscale, colorrange=c_range)
+    xlims!(ax, xtk[1], xtk[end])
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    ax.xminorticksvisible=true
+    # ax.xminorgridvisible=true
+    ax.xminorticks=IntervalsBetween(10)
+    ax.yticks = 0:30:180
+    return hm
+end
+function ()
+    
+end
+
 function sta_heatmap_test(ax, sta_data; unit="eflux", c_range=(1e4, 1e10), colormap=:viridis, colorscale=log10, overdraw=true,sc_correction = false,krawg...)
     swp_ind = sta_data[:swp_ind]; unique_swp_ind = unique(swp_ind)
     epoch = sta_data[:epoch] ; x, time_i = time2x(x0, x_range)
