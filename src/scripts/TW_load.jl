@@ -7,7 +7,8 @@ using Dates
 include("TCWavelet.jl")
 using Wavelets
 
-export load_mag_2c_bydlm, calculate_mag, get_spc2mso_rot_matrix_via_2c
+export load_mag_2c_bydlm, load_minpa 
+export  calculate_mag, get_spc2mso_rot_matrix_via_2c
 export read_list, caculate_wavelet, find_avail_data
 
 # function load_mag(file::String);#弃用，以dlm方法为准
@@ -192,6 +193,67 @@ function find_avail_data(data::Dict, time_range::Vector{DateTime}, keys)
         avail_data[key] = ndims(value) == 2 ? value[ind, :] : value[ind]
     end
     return avail_data
+end
+
+const energymod1 = [2.81, 3.548928, 4.482167, 5.660813, 7.149401, 9.029433, 11.40385,
+    14.40264, 18.19001, 22.97332, 29.01447, 36.64422, 46.28032, 58.45036, 73.82067,
+    93.23282, 117.7497, 148.7135, 187.8198, 237.2095, 299.587, 378.3675, 477.8644,
+    603.5253, 762.2309, 962.6694, 1215.816, 1535.532, 1939.321, 2449.292, 3093.366,
+    3906.809, 4934.157, 6231.661, 7870.361, 9939.98, 12553.83, 15855.03, 20024.33, 25290.0]
+const energymod4 = [2.81, 3.246924, 3.751784, 4.335145, 5.009211, 5.788088, 6.688071, 7.727991,
+    8.929607, 10.31806, 11.9224, 13.77621, 15.91825, 18.39336, 21.25332, 24.55798,
+    28.37647, 32.7887, 37.88697, 43.77797, 50.58496, 58.45036, 67.53873, 78.04025,
+    90.17464, 104.1958, 120.3971, 139.1175, 160.7487, 185.7433, 214.6243, 247.996,
+    286.5566, 331.113, 382.5974, 442.087, 510.8266, 590.2544, 682.0324, 788.0808,
+    910.6185, 1052.21, 1215.816, 1404.862, 1623.303, 1875.708, 2167.36, 2504.36,
+    2893.76, 3343.707, 3863.617, 4464.366, 5158.525, 5960.618, 6887.428, 7958.346, 
+    9195.78, 10625.62, 12277.79, 14186.84, 16392.74, 18941.63, 21886.84, 25290.0]
+const θmod1 = [11.3, 33.8, 56.2, 78.7]
+const ϕmod1 = [11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75,
+               191.25, 213.75, 236.25, 258.75, 281.25, 303.75, 326.25, 348.75]
+const massmod1 = [1, 2, 4, 16, 28, 32, 44, 64]
+const TW_minpa2sc = [0.0 0.0 1.0; -1.0 0.0 0.0; 0.0 -1.0 0.0]
+
+function switch_mod(mod)
+    if mod == 1
+        mass = massmod1
+        minpaphi = 180.0 .- ϕmod1
+        minpatheta = -θmod1
+        energy = energymod1
+    elseif mod == 4
+        mass = massmod1
+        minpaphi = 180.0 .- ϕmod1
+        minpatheta = -θmod1
+        energy = energymod4
+    end
+    return mass, energy, minpaphi, minpatheta
+end
+
+function load_minpa(minpa_file, mod)
+    mass, energy, minpaphi, minpatheta = switch_mod(mod)
+    nmod = length(mass) * length(minpaphi) * length(minpatheta) * length(energy)
+    minpa = identity.(DataFrame(readdlm(minpa_file), :auto))
+    minpaut = map(x->DateTime(x[begin:end-4], DateFormat("y-m-dTH:M:S.s")),
+                  minpa[!, 1])
+    minpajul = datetime2julian.(minpaut)
+    minpadfi = reshape(Array(minpa[:, 60:59+nmod]),
+                       length(minpaut), length(mass), length(minpaphi),
+                       length(minpatheta), length(energy))
+    minpadfi[findall(x->x<0, minpadfi)] .= 0.0
+    minpaeflux = minpadfi .* reshape(energy, 1, 1, 1, 1, length(energy))
+    println("  MINPA data: $(length(minpaut)) time points")
+    data=Dict{Symbol,Any}(
+        :epoch => minpaut,
+        :JulUTtime => minpajul,
+        :mod => mod,
+        :mass => mass,
+        :energy => energy,
+        :phi => minpaphi,
+        :theta => minpatheta,
+        # :minpadfi => minpadfi,
+        :eflux => minpaeflux
+    )
+    return data
 end
 
 # -----------以下为DataFrame版本的读取函数（已弃用）----------------

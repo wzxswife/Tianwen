@@ -28,11 +28,11 @@ data_path = joinpath(input_path, "mvn_swi_l2_coarsesvy3d_$(date_str)_v02_r01.cdf
 quat_path = joinpath(input_path, "mvn_spice_swia_qu_$(date_str).csv")
 mag_path = joinpath(input_path, "mvn_mag_l3_$(date_str_dye)ss1s_$(date_str)_v01_r01.f77_unformatted")
 
-data = load_cdf(data_path)
-quat_data = load_quat(quat_path)
+data = MAVEN_load.load_cdf(data_path)
+quat_data = MAVEN_load.load_quat(quat_path)
 quat_data[:data_load_flag] = true
-swi_data = get_3dc!(data, quat_data = quat_data)
-mag_data = load_mag_l3(mag_path)
+swi_data = MAVEN_SWIA.get_3dc!(data, quat_data = quat_data)
+mag_data = MAVEN_load.load_mag_l3(mag_path)
 println("Data loaded.")
 
 energy_range = [4.0, 10.0]
@@ -54,13 +54,13 @@ ax2 = Axis(fig[2, 1:3], ylabel="ions <4 keV\npitch angle (°)")
 ax3 = Axis(fig[3, 1:3], ylabel="ions 4-10 keV\npitch angle (°)")
 ax4 = Axis(fig[4, 1:3], xlabel="Time (UT)", ylabel="ions 10-25 keV\npitch angle (°)")
 
-hm1 = swi_phi_angle(ax1, swi_data, time_range, energy_range; 
+hm1 = MAVEN_plot.swi_phi_angle(ax1, swi_data, time_range, energy_range; 
     c_range=(1e3, 1e7))
-hm2 = swi_pitch_angle(ax2, swi_data, mag_data, time_range, [0.0, 4.0]; 
+hm2 = MAVEN_plot.swi_pitch_angle(ax2, swi_data, mag_data, time_range, [0.0, 4.0]; 
      c_range=(1e5, 1e8))
-hm3 = swi_pitch_angle(ax3, swi_data, mag_data, time_range, [4.0, 10.0]; 
+hm3 = MAVEN_plot.swi_pitch_angle(ax3, swi_data, mag_data, time_range, [4.0, 10.0]; 
     c_range=(1e5, 1e8))
-hm4 = swi_pitch_angle(ax4, swi_data, mag_data, time_range, [10.0, 25.0]; 
+hm4 = MAVEN_plot.swi_pitch_angle(ax4, swi_data, mag_data, time_range, [10.0, 25.0]; 
     c_range=(1e5, 1e8))
 Colorbar(fig[1, 4], hm1, label="Differential Energy Flux (eV/cm²/s/sr/eV)", 
     width=15, labelsize=14, ticklabelsize=12)

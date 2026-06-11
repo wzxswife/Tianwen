@@ -18,8 +18,9 @@ using Rotations
 using FortranFiles
 # -------------------------Export parts-------------------------
 export load_MAVEN_data, load_cdf, load_mag_l2, load_mag_l3, load_mag_vsc
+export load_STATIC
 export mean_SWEA_pad_pa, carclu_SWEA_pad
-export load_quat
+export load_quat, load_d1_v4d
 
 const Q = 1.602176487e-19 # 库仑
 const EV = 1.602176487e-19
@@ -400,6 +401,30 @@ function load_NGIMS_sht_l3(file::String) # L3 resampled scale height table of NG
         )
     end
     return data_out_dict
+end
+function load_STATIC(file::String)
+    data = load_cdf(file)
+    data[:swp_ind].+=1
+    julUTtimes = datetime2julian.(DateTime.(data[:epoch]))
+    sta_data = Dict{Symbol,Any}(
+        :swp_ind  => data[:swp_ind] |> Array,
+        :mode     => data[:mode] |> Array,
+        :epoch    => data[:epoch] |> Array,
+        :JulUTtime => julUTtimes |> Array, 
+        :eflux    => data[:eflux] |> Array,
+        :mass     => data[:mass_arr] |> Array,
+        :energy   => data[:energy] |> Array,
+        :theta    => data[:theta] |> Array,
+        :phi      => data[:phi] |> Array,
+        :nenergy => data[:nenergy] |> Int64,
+        :denergy  => data[:denergy] |> Array,
+        :dtheta   => data[:dtheta] |> Array,
+        :dphi     => data[:dphi] |> Array,
+        :domega   => data[:domega] |> Array,
+        :quat_mso => data[:quat_mso] |> Array,
+        :quat_sc  => data[:quat_sc] |> Array,
+    )
+    return sta_data 
 end
 function load_d1_v4d(file::String) # build using STATIC d1 data. already been corrected by sc_pot(static) and vsc by MAG_ss1s
     f = FortranFile(file, "r")
