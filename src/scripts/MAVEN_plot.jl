@@ -94,7 +94,8 @@ function swi_phi_angle(ax, data::Dict, time_range::Vector{DateTime},
 end
 function swi_pitch_angle(ax, swi_data::Dict, mag_data::Dict, 
     time_range::Vector{DateTime}, energy_range::Vector{Float64}; 
-    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
+    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10, 
+    threshold = 1e2)
     
     local time_idx_mag = findall(minimum(time_range).<mag_data[:epoch].<maximum(time_range))
     local mag_epochs = mag_data[:epoch][time_idx_mag]
@@ -146,7 +147,7 @@ function swi_pitch_angle(ax, swi_data::Dict, mag_data::Dict,
     end
 
     local xtk = datetime2julian.(time_range)
-    local threshold = 1e2  # 你想设定的阈值
+
     # 将小于阈值的值替换为 NaN
     local heatmap_data_masked = ifelse.(heatmap_data .< threshold, NaN, heatmap_data)
     hm = heatmap!(ax, xtk, range(0, 180, length=n_bins), heatmap_data_masked, 
@@ -159,21 +160,53 @@ function swi_pitch_angle(ax, swi_data::Dict, mag_data::Dict,
     ax.yticks = 0:30:180
     return hm
 end
+# # TODO:完善STATIC phi angle函数 
+# function sta_phi_angle(ax, sta_data::Dict, im::Int, time_range::Vector{DateTime}, 
+#     energy_range::Vector{Float64}; angle_range=[0, 180],
+#     c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
+    
+#     local time_idx_sta = findall(time_range[begin].<sta_data[:epoch].<time_range[end])
+#     local swp = sta_data[:swp_ind][time_idx_sta[1]]
+#     local energies = sta_data[:energy][im,1,:,swp]
+#     local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
+#     local pitch_angle = sta_data[:phi][:]
+#     local time_idx = findall(minimum(time_range).<sta_data[:epoch].<maximum(time_range))
+#     local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
+#     local angle_idx = findall(angle_range[1] .< pitch_angle .< angle_range[end])
+#     local epochs = sta_data[:epoch][time_idx]
+#     local flux_4d = sta_data[:diff_en_fluxes][time_idx, angle_idx, :, energy_idx] 
+#     local flux_2d = dropdims(mean(flux_4d, dims=(3,4)), dims=(3,4))
+
+#     local xtk = datetime2julian.(time_range)
+#     local time_data = datetime2julian.(epochs)
+#     hm = heatmap!(ax, time_data, pitch_angle[angle_idx], flux_2d,
+#         colorscale=colorscale, colormap=colormap, colorrange=c_range)
+#     xlims!(ax, xtk[1], xtk[end])
+#     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+#     ax.xminorticksvisible=true
+#     # ax.xminorgridvisible=true
+#     ax.xminorticks=IntervalsBetween(10)
+#     ax.yticks = 0:30:180
+#     return hm
+# end
+
 function sta_pitch_angle(ax, sta_data::Dict, mag_data::Dict, im::Int,
     time_range::Vector{DateTime}, energy_range::Vector{Float64}; 
-    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
+    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10, 
+    threshold=1e2)
 
     local time_idx_mag = findall(minimum(time_range).<mag_data[:epoch].<maximum(time_range))
     local mag_epochs = mag_data[:epoch][time_idx_mag]
     local time_idx_sta = findall(time_range[begin].<sta_data[:epoch].<time_range[end])
     local swp = sta_data[:swp_ind][time_idx_sta[1]]
-    local energies = sta_data[:energy][im,1,:,swp]
+    local energies = sta_data[:energy][im,1,:,swp]./1000
     local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
     local ntime = length(time_idx_sta)
     local nenergy = length(energy_idx)
     local ntheta = 4
     local nphi = 16
     local sta_epochs = sta_data[:epoch][time_idx_sta]
+    local time_data = datetime2julian.(sta_epochs) 
     local flux_3d = sta_data[:eflux][time_idx_sta, im, :, energy_idx]
     local energy = sta_data[:energy][im,:,energy_idx,swp]
     local phi = sta_data[:phi][im,:,energy_idx,swp]
@@ -184,7 +217,7 @@ function sta_pitch_angle(ax, sta_data::Dict, mag_data::Dict, im::Int,
     for i in 1:ntime
         local mag_idx = argmin(abs.(mag_epochs .- sta_epochs[i]))
         local B = convert(Vector{Float64},mag_data[:B][mag_idx, :])
-        pitch_angle_3d[i, :, :, :] = angle_between.(vv, Ref(B))
+        pitch_angle_3d[i, :, :, :] = vector_angle.(vv, Ref(B))
     end
 
     local pitch_angle_2d = reshape(pitch_angle_3d, ntime, nphi*ntheta*nenergy)
@@ -213,10 +246,9 @@ function sta_pitch_angle(ax, sta_data::Dict, mag_data::Dict, im::Int,
     end
 
     local xtk = datetime2julian.(time_range)
-    local threshold = 1e2  # 你想设定的阈值
     # 将小于阈值的值替换为 NaN
     local heatmap_data_masked = ifelse.(heatmap_data .< threshold, NaN, heatmap_data)
-    hm = heatmap!(ax, xtk, range(0, 180, length=n_bins), heatmap_data_masked, 
+    hm = heatmap!(ax, time_data, range(0, 180, length=n_bins), heatmap_data_masked, 
         colormap=colormap, colorscale=colorscale, colorrange=c_range)
     xlims!(ax, xtk[1], xtk[end])
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
@@ -229,34 +261,36 @@ end
 function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict, 
     xd::Vector{DateTime})
     # date = DateTime(2022, 06, 12, 00, 00, 00)
-    sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")), 
+    local sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")), 
         rich("m/q=4.573966"), rich("m/q=9.22163"), rich(rich("O"), superscript("+")), 
         rich(rich("O"), subscript("2"), superscript("+")), rich(rich("CO"), 
         subscript("2"), superscript("+")), rich("m/q=69.26344")]
 
-    size_inches = (20, 30)
-    size_pt = 72 .* size_inches
-    fig = Figure(size = size_pt, fontsize = 20, figure_padding = (5,20, 9, 10))
-    cn = cgrad(:seaborn_dark, 10, categorical = true)
-    lcn = Makie.wong_colors()
+    local size_inches = (20, 30)
+    local size_pt = 72 .* size_inches
+    local fig = Figure(size = size_pt, fontsize = 20, figure_padding = (5,20, 9, 10))
+    local cn = cgrad(:seaborn_dark, 10, categorical = true)
+    local lcn = Makie.wong_colors()
 
-    xtk = datetime2julian.(xd)
-    xtk = Float32.(xtk .- sta_data[:JulUTtime][1])
+    local xtk = datetime2julian.(xd)
+    local xtk = Float32.(xtk .- sta_data[:JulUTtime][1])
 
-    ind = findall(xd[begin] .<= sta_data[:epoch] .<= xd[end])
-    # @show minimum(sta_data[:swp_ind][ind]), maximum(sta_data[:swp_ind][ind])
-    swp = sta_data[:swp_ind][ind[1]]
+    local ind = findall(xd[begin] .<= sta_data[:epoch] .<= xd[end])
+    local swp = sta_data[:swp_ind][ind[1]]
 
-    axes = [Axis(fig[j, i], yscale=log10, xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, xticklabelrotation=-π/3) for j in 1:16, i in 1:4]
+    local axes = [Axis(fig[j, i], yscale=log10, 
+        xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, 
+        xticklabelrotation=-π/3) for j in 1:16, i in 1:4]
 
     for j in 1:16
         for i in 1:4
-            ax = axes[j, i]
+            local ax = axes[j, i]
             heatmap!(ax, Float32.(sta_data[:JulUTtime][ind].-sta_data[:JulUTtime][1]), 
                 sta_data[:energy][im, (j-1)*4+i, :, swp, 1], 
                 sta_data[:eflux][ind, im, (j-1)*4+i, :], 
                 colormap=:gist_earth, colorscale=log10, colorrange = (1e5, 1e9))
-            text!(ax, 0.0, 1.0, text = rich("θ=$i ϕ=$j"), align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
+            local text = rich("θ=$i ϕ=$j")
+            text!(ax, 0.0, 1.0, text = text, align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
             ylims!(ax, 1e1, 1e4)
             if im==1 && i==2 && (j==13 || j==14)
@@ -281,39 +315,42 @@ function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict,
 
     return fig
 end
+
 function MVN_SWIA_eflux_Overview_plot(swi_data::Dict, xd::Vector{DateTime})
 
-    size_inches = (20, 30)
-    size_pt = 72 .* size_inches
-    fig = Figure(size = size_pt, fontsize = 20, figure_padding = (5,20, 9, 10))
-    cn = cgrad(:seaborn_dark, 10, categorical = true)
-    lcn = Makie.wong_colors()
+    local size_inches = (20, 30)
+    local size_pt = 72 .* size_inches
+    local fig = Figure(size = size_pt, fontsize = 20, figure_padding = (5,20, 9, 10))
+    local cn = cgrad(:seaborn_dark, 10, categorical = true)
+    local lcn = Makie.wong_colors()
 
-    xtk = datetime2julian.(xd)
-    xtk = Float32.(xtk .- swi_data[:JulUTtime][1])
+    local xtk = datetime2julian.(xd)
+    local JulUTtime = datetime2julian.(DateTime.(swi_data[:epoch]))
+    local xtk = Float32.(xtk .- JulUTtime[1])
 
-    ind = findall(xd[begin] .<= swi_data[:epoch] .<= xd[end])
-    swp = swi_data[:swp_ind][ind[1]]
+    local ind = findall(xd[begin] .<= swi_data[:epoch] .<= xd[end])
 
-    axes = [Axis(fig[j, i], yscale=log10, xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, xticklabelrotation=-π/3) for j in 1:16, i in 1:4]
+    local axes = [Axis(fig[j, i], yscale=log10, 
+        xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, 
+        xticklabelrotation=-π/3) for j in 1:16, i in 1:4]
 
     for j in 1:16
         for i in 1:4
-            ax = axes[j, i]
-            heatmap!(ax, Float32.(swi_data[:JulUTtime][ind].-swi_data[:JulUTtime][1]), 
-                swi_data[:energy][im, (j-1)*4+i, :, swp, 1], 
-                swi_data[:eflux][ind, im, (j-1)*4+i, :], 
+            local ax = axes[j, i]
+            heatmap!(ax, Float32.(JulUTtime[ind].-JulUTtime[1]), 
+                vec(swi_data[:energy]), 
+                swi_data[:diff_en_fluxes][ind, j, i, :], 
                 colormap=:gist_earth, colorscale=log10, colorrange = (1e5, 1e9))
             text!(ax, 0.0, 1.0, text = rich("θ=$i ϕ=$j"), align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
             ylims!(ax, 1e1, 1e4)
             if im==1 && i==2 && (j==13 || j==14)
-                annotation!(ax, -50, -40, datetime2julian(xd[1])-swi_data[:JulUTtime][1], 300, path = Ann.Paths.Corner(), text = "SW", color=cn[2], fontsize=20)
-                annotation!(ax, -90, -63.5, datetime2julian(xd[1])-swi_data[:JulUTtime][1], 1.3e3, path = Ann.Paths.Corner(), text = "PU", color=cn[2], fontsize=20)
+                annotation!(ax, -50, -40, datetime2julian(xd[1])-JulUTtime[1], 300, path = Ann.Paths.Corner(), text = "SW", color=cn[2], fontsize=20)
+                annotation!(ax, -90, -63.5, datetime2julian(xd[1])-JulUTtime[1], 1.3e3, path = Ann.Paths.Corner(), text = "PU", color=cn[2], fontsize=20)
             end
             if im==1 && i==2 && (j==11 || j==12)
-                annotation!(ax, -130, -77.5, datetime2julian(xd[1])-swi_data[:JulUTtime][1], 3e3, path = Ann.Paths.Corner(), text = "SPU", color=cn[2], fontsize=20)
-                annotation!(ax, -90, -58, datetime2julian(xd[1])-swi_data[:JulUTtime][1], 900, path = Ann.Paths.Corner(), text = "PU", color=cn[2], fontsize=20)
+                annotation!(ax, -130, -77.5, datetime2julian(xd[1])-JulUTtime[1], 3e3, path = Ann.Paths.Corner(), text = "SPU", color=cn[2], fontsize=20)
+                annotation!(ax, -90, -58, datetime2julian(xd[1])-JulUTtime[1], 900, path = Ann.Paths.Corner(), text = "PU", color=cn[2], fontsize=20)
             end
         end
     end
@@ -322,7 +359,7 @@ function MVN_SWIA_eflux_Overview_plot(swi_data::Dict, xd::Vector{DateTime})
     hideydecorations!.(axes[:, 2:end], grid=false)
     colgap!(fig.layout, 30)
     Colorbar(fig[1:16, 5], colormap=:gist_earth, scale=log10, colorrange = (1e5, 1e9), 
-        label = rich("MAVEN STATIC ") * sp[im] * rich(rich(" Differential Energy Flux (cm"), 
+        label = rich("MAVEN SWIA ") * rich(rich("Ion Differential Energy Flux (cm"), 
         superscript("-2"), rich("s"), superscript("-1"), rich("sr"), superscript("-1"), rich(")")))
     Label(fig[1:16, 0], rich("Energy (eV)"), fontsize = 25, halign = :center, rotation = π/2)
     Label(fig[17, 1:5], rich("Universal Time"), fontsize = 20, halign = :center)

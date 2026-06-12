@@ -65,8 +65,8 @@ function plot_arrow!(scene, result; color=:red)
               shaftradius=0.02, tipradius=0.05, tailradius=0.02)
 end
 
-function TW_MINPA_eflux_Overview_plot(minpa_data::Dict, 
-    time_range::Vector{DateTime}, im::Int)
+function TW_MINPA_eflux_Overview_plot(minpa_data::Dict, time_range::Vector{DateTime}, im::Int)
+
     size_inches = (20, 30)
     size_pt = 72 .* size_inches
     fig = Figure(size = size_pt, fontsize = 20, figure_padding = (5,20, 9, 10))
@@ -111,7 +111,7 @@ function TW_MINPA_eflux_Overview_plot(minpa_data::Dict,
 
     return fig
 end
-
+# TODO:完善MINPA pitch angle函数
 function TW_MINPA_pitch_angle(ax, minpa_data::Dict, mag_data::Dict, im::Int,
     time_range::Vector{DateTime}, energy_range::Vector{Float64}; 
     c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
