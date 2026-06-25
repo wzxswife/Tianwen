@@ -97,17 +97,18 @@ function swi_pitch_angle(ax, swi_data::Dict, mag_data::Dict,
     c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10, 
     threshold = 1e2)
     
-    local time_idx_mag = findall(minimum(time_range).<mag_data[:epoch].<maximum(time_range))
+    local time_idx_mag = findall(time_range[begin].<mag_data[:epoch].<time_range[end])
     local mag_epochs = mag_data[:epoch][time_idx_mag]
     local energies = swi_data[:energy][:] ./ 1000 
     local pitch_angle = swi_data[:phi][:]
-    local time_idx = findall(minimum(time_range).<swi_data[:epoch].<maximum(time_range))
-    local energy_idx = findall(minimum(energy_range).<energies.<maximum(energy_range)) 
+    local time_idx = findall(time_range[begin].<swi_data[:epoch].<time_range[end])
+    local energy_idx = findall(energy_range[begin].<energies.<energy_range[end]) 
     local ntime = length(time_idx)
     local nenergy = length(energy_idx)
     local ntheta = 4
     local nphi = 16
     local swi_epochs = swi_data[:epoch][time_idx]
+    local time_data = datetime2julian.(swi_epochs) 
     local flux_4d = swi_data[:diff_en_fluxes][time_idx, :, :, energy_idx]
     local pitch_angle_4d = Array{Float64, 4}(undef, ntime, nphi, ntheta, nenergy)
     for i in 1:ntime
@@ -150,7 +151,7 @@ function swi_pitch_angle(ax, swi_data::Dict, mag_data::Dict,
 
     # 将小于阈值的值替换为 NaN
     local heatmap_data_masked = ifelse.(heatmap_data .< threshold, NaN, heatmap_data)
-    hm = heatmap!(ax, xtk, range(0, 180, length=n_bins), heatmap_data_masked, 
+    hm = heatmap!(ax, time_data, range(0, 180, length=n_bins), heatmap_data_masked, 
         colormap=colormap, colorscale=colorscale, colorrange=c_range)
     xlims!(ax, xtk[1], xtk[end])
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
@@ -195,7 +196,7 @@ function sta_pitch_angle(ax, sta_data::Dict, mag_data::Dict, im::Int,
     c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10, 
     threshold=1e2)
 
-    local time_idx_mag = findall(minimum(time_range).<mag_data[:epoch].<maximum(time_range))
+    local time_idx_mag = findall(time_range[begin].<mag_data[:epoch].<time_range[end])
     local mag_epochs = mag_data[:epoch][time_idx_mag]
     local time_idx_sta = findall(time_range[begin].<sta_data[:epoch].<time_range[end])
     local swp = sta_data[:swp_ind][time_idx_sta[1]]
@@ -259,7 +260,7 @@ function sta_pitch_angle(ax, sta_data::Dict, mag_data::Dict, im::Int,
     return hm
 end
 function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict, 
-    xd::Vector{DateTime})
+    xd::Vector{DateTime}; wave_times::Vector{DateTime}=DateTime[])
     # date = DateTime(2022, 06, 12, 00, 00, 00)
     local sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")), 
         rich("m/q=4.573966"), rich("m/q=9.22163"), rich(rich("O"), superscript("+")), 
@@ -278,6 +279,11 @@ function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict,
     local ind = findall(xd[begin] .<= sta_data[:epoch] .<= xd[end])
     local swp = sta_data[:swp_ind][ind[1]]
 
+    local wave_x = Float32[]
+    if !isempty(wave_times)
+        wave_x = Float32.(datetime2julian.(wave_times) .- sta_data[:JulUTtime][1])
+    end
+
     local axes = [Axis(fig[j, i], yscale=log10, 
         xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, 
         xticklabelrotation=-π/3) for j in 1:16, i in 1:4]
@@ -293,6 +299,24 @@ function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict,
             text!(ax, 0.0, 1.0, text = text, align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
             ylims!(ax, 1e1, 1e4)
+
+            # # 在 xd 范围内沿时间平均，找出平均通量最大的能道，用红色横线标注能量值（keV）
+            # if !isempty(ind)
+            #     eflux_slice = sta_data[:eflux][ind, im, (j-1)*4+i, :]  # [nt, nenergy]
+            #     mean_flux = vec(mean(eflux_slice, dims=1))
+            #     max_flux, max_energy_idx = findmax(mean_flux)
+            #     if !isnan(max_flux) && isfinite(max_flux)
+            #         max_energy_eV = sta_data[:energy][im, (j-1)*4+i, max_energy_idx, swp, 1]
+            #         hlines!(ax, [max_energy_eV], color=:red, linewidth=2)
+            #         text!(ax, xtk[end], max_energy_eV, text=rich("Max: ", rich("$(round(max_energy_eV / 1000, digits=2)) keV", color=:red, fontweight=:bold)),
+            #             align=(:right, :bottom), fontsize=14, strokewidth=3, strokecolor=:black, color=:white)
+            #     end
+            # end
+
+            if !isempty(wave_x)
+                vlines!(ax, wave_x, color=:cyan, linewidth=2, linestyle=:dash)
+            end
+
             if im==1 && i==2 && (j==13 || j==14)
                 annotation!(ax, -50, -40, datetime2julian(xd[1])-sta_data[:JulUTtime][1], 300, path = Ann.Paths.Corner(), text = "SW", color=cn[2], fontsize=20)
                 annotation!(ax, -90, -63.5, datetime2julian(xd[1])-sta_data[:JulUTtime][1], 1.3e3, path = Ann.Paths.Corner(), text = "PU", color=cn[2], fontsize=20)
@@ -316,7 +340,8 @@ function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict,
     return fig
 end
 
-function MVN_SWIA_eflux_Overview_plot(swi_data::Dict, xd::Vector{DateTime})
+function MVN_SWIA_eflux_Overview_plot(swi_data::Dict, xd::Vector{DateTime}; 
+    wave_times::Vector{DateTime}=DateTime[])
 
     local size_inches = (20, 30)
     local size_pt = 72 .* size_inches
@@ -329,6 +354,11 @@ function MVN_SWIA_eflux_Overview_plot(swi_data::Dict, xd::Vector{DateTime})
     local xtk = Float32.(xtk .- JulUTtime[1])
 
     local ind = findall(xd[begin] .<= swi_data[:epoch] .<= xd[end])
+
+    local wave_x = Float32[]
+    if !isempty(wave_times)
+        wave_x = Float32.(datetime2julian.(wave_times) .- JulUTtime[1])
+    end
 
     local axes = [Axis(fig[j, i], yscale=log10, 
         xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, 
@@ -344,6 +374,24 @@ function MVN_SWIA_eflux_Overview_plot(swi_data::Dict, xd::Vector{DateTime})
             text!(ax, 0.0, 1.0, text = rich("θ=$i ϕ=$j"), align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
             ylims!(ax, 1e1, 1e4)
+
+            # 在 xd 范围内沿时间平均，找出平均通量最大的能道，用红色横线标注能量值（keV）
+            if !isempty(ind)
+                eflux_slice = swi_data[:diff_en_fluxes][ind, j, i, :]  # [nt, nenergy]
+                mean_flux = vec(mean(eflux_slice, dims=1))
+                max_flux, max_energy_idx = findmax(mean_flux)
+                if !isnan(max_flux) && isfinite(max_flux)
+                    max_energy_eV = vec(swi_data[:energy])[max_energy_idx]
+                    hlines!(ax, [max_energy_eV], color=:red, linewidth=2)
+                    text!(ax, xtk[end], max_energy_eV, text=rich("Max: ", rich("$(round(max_energy_eV / 1000, digits=2)) keV", color=:red, fontweight=:bold)),
+                        align=(:right, :bottom), fontsize=14, strokewidth=3, strokecolor=:black, color=:white)
+                end
+            end
+
+            if !isempty(wave_x)
+                vlines!(ax, wave_x, color=:cyan, linewidth=2, linestyle=:dash)
+            end
+
             if im==1 && i==2 && (j==13 || j==14)
                 annotation!(ax, -50, -40, datetime2julian(xd[1])-JulUTtime[1], 300, path = Ann.Paths.Corner(), text = "SW", color=cn[2], fontsize=20)
                 annotation!(ax, -90, -63.5, datetime2julian(xd[1])-JulUTtime[1], 1.3e3, path = Ann.Paths.Corner(), text = "PU", color=cn[2], fontsize=20)

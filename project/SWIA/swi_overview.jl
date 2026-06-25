@@ -44,20 +44,21 @@ println("Data loaded.")
 
 # Define time range for plotting
 h_list = 0:3:24
+wave_time = DateTime(2022, 8, 24, 07, 30, 18)
 title = rich("MAVEN SWIA ") * rich(rich("Ion Differential Energy Flux (cm"), 
     superscript("-2"), rich("s"), superscript("-1"), rich("sr"), 
     superscript("-1"), rich(")"))
 for hstart in h_list
     xd = DateTime.(date + Dates.Hour(hstart) .+ Dates.Minute(30) .* range(0, 6))
     name = "MVN_SWIA_" * "eflux_Overview_" * Dates.format(xd[1], "yyyymmddTHH") * ".pdf"
-    fig = MAVEN_plot.MVN_SWIA_eflux_Overview_plot(swi_data, xd)
+    fig = MAVEN_plot.MVN_SWIA_eflux_Overview_plot(swi_data, xd, wave_times=[wave_time])
     Label(fig[0, :], title, fontsize=20, tellwidth=false)
     save(joinpath(Overview_path, name), fig, pt_per_unit = 1)
     println("Saved figure: ", joinpath(Overview_path, name))
 end
 xd_total = DateTime.(date + Dates.Hour(0) .+ Dates.Hour(4) .* range(0, 6)) 
 name = "MVN_SWIA_" * "eflux_Overview_" * Dates.format(xd_total[1], "yyyymmdd") * "_total.pdf"
-fig = MAVEN_plot.MVN_SWIA_eflux_Overview_plot(swi_data, xd_total)
+fig = MAVEN_plot.MVN_SWIA_eflux_Overview_plot(swi_data, xd_total, wave_times=[wave_time])
 Label(fig[0, :], title, fontsize=20, tellwidth=false)
 save(joinpath(Overview_path, name), fig, pt_per_unit = 1)
 println("Saved figure: ", joinpath(Overview_path, name))

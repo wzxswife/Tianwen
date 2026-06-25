@@ -150,6 +150,8 @@ end
 计算小波变换（测试通过）
 """
 function caculate_wavelet(mag_data, dt; mother="MORLET")
+    # 确保输入为 Float64（wavelet 只接受 Float64）
+    mag_data = Float64.(mag_data)
     ns =  length(mag_data[:, 1])
     wave, period, scale, coi = wavelet(reshape(mag_data[:, 1], ns), dt; pad=1, mother=mother)
     xpower = abs.(wave).^2

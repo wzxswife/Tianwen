@@ -1,8 +1,10 @@
 module MINPA_plot
-using Dates
+using Dates, Statistics
 using GLMakie, LinearAlgebra, CoordinateTransformations
 
+include("MAVEN_SWIA.jl")
 include("SphericalSplines.jl")
+using .MAVEN_SWIA
 using .SphericalSplines
 
 export plot_vdf_slices!, plot_vdf_slice_vperp1!, plot_arrow!
@@ -76,7 +78,7 @@ function TW_MINPA_eflux_Overview_plot(minpa_data::Dict, time_range::Vector{DateT
     xd = time_range
     xtk = datetime2julian.(xd)
     xtk = Float32.(xtk .- minpa_data[:JulUTtime][1])
-
+    idx = findall(time_range[begin] .<= minpa_data[:epoch] .<= time_range[end])
     axes = [Axis(fig[j, i], yscale=log10, xticks = (xtk, Dates.format.(xd, "HH:MM")), backgroundcolor=:gray80, xticklabelrotation=-π/3) for j in 1:16, i in 1:4]
 
     for j in 1:16
@@ -89,6 +91,19 @@ function TW_MINPA_eflux_Overview_plot(minpa_data::Dict, time_range::Vector{DateT
                 align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
             ylims!(ax, 1e1, 1e4)
+
+            # 在 time_range 内沿时间平均，找出平均通量最大的能道，用红色横线标注能量值（keV）
+            if !isempty(idx)
+                eflux_slice = minpa_data[:eflux][idx, im, j, i, :]  # [nt, nenergy]
+                mean_flux = vec(mean(eflux_slice, dims=1))           # 每个能道的平均通量
+                max_flux, max_energy_idx = findmax(mean_flux)
+                if !isnan(max_flux) && isfinite(max_flux)
+                    max_energy_eV = minpa_data[:energy][max_energy_idx]
+                    hlines!(ax, [max_energy_eV], color=:red, linewidth=2)
+                    text!(ax, xtk[end], max_energy_eV, text=rich("Max: ", rich("$(round(max_energy_eV / 1000, digits=2)) keV", color=:red, fontweight=:bold)),
+                        align=(:right, :bottom), fontsize=14, strokewidth=3, strokecolor=:black, color=:white)
+                end
+            end
             
             if im == 1 && i==1 && j==12
                 # annotation!(ax, -80, -40, datetime2julian(DateTime(2022, 06, 12, 10, 00, 00))-minpajulianmod1[1], 600, path = Ann.Paths.Corner(), text = "SW", color=cn[2], fontsize=20)
@@ -114,8 +129,77 @@ end
 # TODO:完善MINPA pitch angle函数
 function TW_MINPA_pitch_angle(ax, minpa_data::Dict, mag_data::Dict, im::Int,
     time_range::Vector{DateTime}, energy_range::Vector{Float64}; 
-    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10)
+    c_range=(1e3, 1e8), colormap=cgrad(:RdYlBu, rev=true), colorscale=log10, 
+    threshold=1e0)
     
+    local time_idx_mag = findall(time_range[begin].<mag_data[:epoch].<time_range[end])
+    local mag_epochs = mag_data[:epoch][time_idx_mag]
+    local energies = minpa_data[:energy][:] ./ 1000 
+    local time_idx = findall(time_range[begin].<minpa_data[:epoch].<time_range[end])
+    local energy_idx = findall(energy_range[begin].<energies.<energy_range[end]) 
+    local ntime = length(time_idx)
+    local nenergy = length(energy_idx)
+    local ntheta = 4
+    local nphi = 16
+    local minpa_epochs = minpa_data[:epoch][time_idx]
+    local time_data = datetime2julian.(minpa_epochs) 
+    local flux_4d = minpa_data[:eflux][time_idx, im, :, :, energy_idx]
+    local pitch_angle_4d = Array{Float64, 4}(undef, ntime, nphi, ntheta, nenergy)
+    for i in 1:ntime
+        local energy = reshape(minpa_data[:energy][energy_idx],1,1,nenergy)
+        local phi = reshape(minpa_data[:phi],nphi,1,1)
+        local theta = reshape(minpa_data[:theta],1,ntheta,1)
+        local v0 = MAVEN_SWIA.ion_energy2v.(energy,1)
+        local vv = MAVEN_SWIA.sphere2xyz_for_SWIA.(v0,theta,phi)
+        local mag_idx = argmin(abs.(mag_epochs .- minpa_epochs[i]))
+        local B = convert(Vector{Float64},mag_data[:B][mag_idx, :])
+        pitch_angle_4d[i, :, :, :] = angle_between.(vv, Ref(B))
+    end
+
+    local pitch_angle_2d = reshape(pitch_angle_4d, ntime, nphi*ntheta*nenergy)
+    local flux_2d = reshape(flux_4d, ntime, nphi*ntheta*nenergy)
+
+    # 创建 pitch angle bins (0-180度)
+    local n_bins = 60
+    local bin_edges = range(0, 180, length=n_bins+1)
+    local bin_centers = (bin_edges[1:end-1] + bin_edges[2:end]) / 2
+    # 构建热力图矩阵
+    local heatmap_data = zeros(Float64, ntime, n_bins)
+    for t in 1:ntime
+        pitch_angle_t = pitch_angle_2d[t, :]
+        flux_t = flux_2d[t, :]
+        
+        for i in 1:(nphi*ntheta*nenergy)
+            pa_val = pitch_angle_t[i]
+            flux_val = flux_t[i]
+            isnan(pa_val) && continue 
+            # 找到对应的 bin
+            bin_idx = floor(Int, pa_val / 180 * n_bins) + 1
+            bin_idx = clamp(bin_idx, 1, n_bins)
+            
+            heatmap_data[t, bin_idx] += flux_val
+        end
+    end
+
+    local xtk = datetime2julian.(time_range)
+
+    # 将小于阈值的值替换为 NaN
+    local heatmap_data_masked = ifelse.(heatmap_data .< threshold, NaN, heatmap_data)
+    hm = heatmap!(ax, time_data, range(0, 180, length=n_bins), heatmap_data_masked, 
+        colormap=colormap, colorscale=colorscale, colorrange=c_range)
+    xlims!(ax, xtk[1], xtk[end])
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    ax.xminorticksvisible=true
+    # ax.xminorgridvisible=true
+    ax.xminorticks=IntervalsBetween(10)
+    ax.yticks = 0:30:180
+    return hm
+end
+
+# 常用函数
+function angle_between(v1, v2)
+    cosθ = dot(v1, v2) / (norm(v1) * norm(v2))
+    return acosd(clamp(cosθ, -1.0, 1.0))  # 限制范围防止数值误差
 end
 
 end

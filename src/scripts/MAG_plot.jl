@@ -88,7 +88,7 @@ end
 画火星弓激波、磁层顶和火星位置（测试通过）
 """
 # 只有x_r图
-function bowshock_plot_xr(ax)
+function bowshock_plot_xr(ax; xlim=(-5, 5), ylim=(0, 5))
     np = 5001
     xshock = range(-10, 3, length=np)
     ryzshock = bowshock.(xshock)
@@ -101,8 +101,8 @@ function bowshock_plot_xr(ax)
     xmp = [xmp[ind1]; reverse(xmp[ind1])]
     ryzmp = [ryzmp[ind1]; -reverse(ryzmp[ind1])]
 
-    xlims!(ax, -5, 5) 
-    ylims!(ax, 0, 5) 
+    xlims!(ax, xlim[1], xlim[2]) 
+    ylims!(ax, ylim[1], ylim[2]) 
     arc!(ax, Point2f(0), 1, 0, π; color=:black, linewidth=2)
     phi = range(0, 0.5π; length=180)
     x = [cos.(phi); 0.0]
@@ -164,13 +164,15 @@ end
 """
 画航天器轨道，和航天器位置（测试通过）
 """
-function plot_spacecraft_orbit_xr(ax, data::Dict, time_range::Vector{DateTime})
-    xlims!(ax, -5, 5) 
-    ylims!(ax, 0, 5)
+function plot_spacecraft_orbit_xr(ax, data::Dict, time_range::Vector{DateTime}; 
+    xlim = (5,-5), ylim = (0, 5))
+    xlims!(ax, xlim[1], xlim[2]) 
+    ylims!(ax, ylim[1], ylim[2])
     l3 = lines!(ax, data[:position][:, 1], 
         sqrt.(data[:position][:, 2].^2+data[:position][:, 3].^2); 
         color=:black, overdraw = true)
     len = length(time_range)
+    crange = len > 1 ? (1, len) : (1, 2)
     for ti in 1:len
         local time = time_range[ti]
         local ind = findfirst(x-> x<time && x>time-Dates.Second(1), 
@@ -180,11 +182,10 @@ function plot_spacecraft_orbit_xr(ax, data::Dict, time_range::Vector{DateTime})
         if ind !== nothing
             scatter!(ax, data[:position][ind, 1], 
                 sqrt.(data[:position][ind, 2].^2+data[:position][ind, 3].^2); 
-                color=ti, colorrange=(1, len), colormap=:tab10, 
-                markersize=10)
+                color=ti, colorrange=crange, colormap=:tab10, markersize=10)
             text!(ax, 0.9, 0.9-ti*0.1, text = str, font = :bold, 
                 align = (:center, :center), space = :relative, fontsize = 25, 
-                color=ti, colorrange=(1, len), colormap=:tab10)
+                color=ti, colorrange=crange, colormap=:tab10)
         end
     end
 end
@@ -274,6 +275,7 @@ end
 磁场wavelet频谱图（测试通过）
 """
 function plot_wavelet(ax, data::Dict, time_range::Vector{DateTime}, dt::Float64;
+    ylim=(1/16.0, 8.0), 
     colorscale=log10, colormap=:gist_earth, colorrange=(2e-2, 3e2))
     local avail_data = find_avail_data(data, time_range, [:epoch, :JulUTtime, :B])
     local Bpower, period = caculate_wavelet(avail_data[:B], dt)
@@ -283,7 +285,7 @@ function plot_wavelet(ax, data::Dict, time_range::Vector{DateTime}, dt::Float64;
     # 扩大x轴范围，确保tick标签不被裁剪
     xlims!(ax, xtk[1], max(xtk[end], time_data[end]))
     # xlims!(ax, minimum(xtk), maximum(xtk)) 
-    ylims!(ax, 2*dt, 256*dt)
+    ylims!(ax, ylim[1], ylim[2])
     ax.yreversed = true
     local hp = heatmap!(ax, time_data, period, Bpower', 
         colorscale=colorscale, colormap=colormap, colorrange=colorrange)

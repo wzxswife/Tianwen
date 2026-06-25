@@ -11,19 +11,10 @@ using .MAVEN_plot
 using .MAVEN_SWIA
 using .MAVEN_STATIC
 
-yyyy = 2022
-mm = 08
-dd = 24
-hh = 06
-mi = 26
-ss = 30
+date = DateTime(2022, 8, 24)
+ts = DateTime.(date + Dates.Hour(0) + Dates.Minute(30))
 
-time_stemp = [
-    DateTime(yyyy, mm, dd, hh, mi, ss),
-    DateTime(yyyy, mm, dd, hh, mi+1, ss),
-    DateTime(yyyy, mm, dd, hh, mi+2, ss),  
-    DateTime(yyyy, mm, dd, hh, mi+3, ss),
-];
+time_stemp = ts .+ Dates.Minute(30) .* range(0, 3)
 
 date_str = Dates.format.(time_stemp[1], "yyyymmdd")
 date_str_dye = "$(year(time_stemp[1]))$(lpad(dayofyear(time_stemp[1]), 3, '0'))"

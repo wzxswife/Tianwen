@@ -7,56 +7,108 @@ using .TW_MINPA
 using .TW_load
 using .MINPA_plot
 
-date = DateTime(2022, 08, 24, 00, 00, 00)
-datejul = datetime2julian(date)
+date = Date(2022, 8, 24)
 datestr = Dates.format.(date, "yyyymmdd")
-ts = DateTime(2022, 08, 24, 8, 10, 00) 
-te = DateTime(2022, 08, 24, 14, 00, 00)
-time_range = ts .+ Dates.Minute(70) .* range(0, 5)
-ts_str = Dates.format(ts, "yyyymmddTHH:MM")
+year_num = Dates.format(date, "yyyy")
+month_num = Dates.format(date, "mm")
 
-# read TW data 
-TW_path = "E:/Data/Tianwen-1/"
-MAG_path = joinpath(TW_path, "MOMAG/2C.V03/2022/08/")
-MINPA_path = joinpath(TW_path, "MINPA/2B/2022/08/")
-MAG_file = joinpath(MAG_path, "TW1_MOMAG_MSO_01hz_20220824_2C_v03.dat")
-MINPA_file_list = glob("*20220824*.2B", MINPA_path)
+data_dir = "E:\\Data"
+output_dir = "E:\\Output"
+TW_path = joinpath(data_dir, "Tianwen-1")
+MINPA_path = joinpath(TW_path, "MINPA", "2B", year_num, month_num)
+MOMAG_path = joinpath(TW_path, "MOMAG", "2C.V03", year_num, month_num)
+TW_output_path = joinpath(output_dir, "Tianwen-1")
+MINPA_output_path = joinpath(TW_output_path, "MINPA")
+overview_path = joinpath(MINPA_output_path, "Overview", year_num, month_num)
+mkpath(overview_path)
+MINPA_file_list = glob("*$datestr*.2B", MINPA_path)
+MOMAG_file = glob("*01Hz*$datestr*.dat", MOMAG_path)
 
+println("MOMAG file: ", MOMAG_file)
 println("MINPA files found: ", length(MINPA_file_list))
 for file in MINPA_file_list
     println("  ", file)
 end
+println("Output path: ", overview_path)
 
-minpa_file = MINPA_file_list[2]
-mod = 1
-save_path = "E:/Output/Tianwen-1/MINPA/Overview"
-mkpath(save_path)
+file_list = Dict{String,Any}(
+    "20220824" => begin
+        date = DateTime(2022, 8, 24)
+        Dict{Symbol,Any}(
+            :date    => date,
+            :datestr => Dates.format(date, "yyyymmdd"),
+            :file1   => begin
+                ts = [date + Dates.Hour(0), 
+                    date + Dates.Hour(2), 
+                    date + Dates.Hour(4),
+                    date + Dates.Hour(6)]
+                Dict{Symbol,Any}(
+                    :mode => 1, 
+                    :file_name => MINPA_file_list[1],
+                    :ts_list => ts, 
+                    :time_list => [ts[1].+ Dates.Minute(20).*(0:6), 
+                    ts[2].+ Dates.Minute(20).*(0:6), 
+                    ts[3].+ Dates.Minute(20).*(0:6),
+                    ts[4].+ Dates.Minute(10).*(0:6)])
+            end,
+            :file2   => begin
+                ts = [date + Dates.Hour(8), 
+                    date + Dates.Hour(10), 
+                    date + Dates.Hour(12)]
+                Dict{Symbol,Any}(
+                    :mode => 1, 
+                    :file_name => MINPA_file_list[2],
+                    :ts_list => ts, 
+                    :time_list => [t .+ Dates.Minute(20) .* (0:6) for t in ts])
+            end,
+            :file4   => begin
+                ts = [date + Dates.Hour(10) + Dates.Minute(53)]
+                Dict{Symbol,Any}(
+                    :mode => 12, 
+                    :file_name => MINPA_file_list[4],
+                    :ts_list => ts, 
+                    :time_list => [t .+ Dates.Minute(5) .* (0:6) for t in ts])
+            end,
+            :file6   => begin
+                ts = [date + Dates.Hour(7)+Dates.Minute(30)]
+                Dict{Symbol,Any}(
+                    :mode => 4, 
+                    :file_name => MINPA_file_list[6],
+                    :ts_list => ts, 
+                    :time_list => [t .+ Dates.Minute(5) .* (0:6) for t in ts])
+            end,
+        )
+    end
+)
 
-mag_data = TW_load.load_mag_2c_bydlm(MAG_file)
-minpa_data = TW_load.load_minpa(minpa_file, mod) 
+mag_data = TW_load.load_mag_2c_bydlm(MOMAG_file[1])
+minpa_Info = file_list[datestr][:file6]
+mod = minpa_Info[:mode]
+minpa_data = TW_load.load_minpa(minpa_Info[:file_name], mod)
 
-im = 1
-pic_name1 = "MINPA_H+eflux_Overview"* ts_str * ".pdf"
-TW_MINPA_eflux_Overview = TW_MINPA_eflux_Overview_plot(minpa_data, time_range, im)
-save(joinpath(save_path, pic_name1), TW_MINPA_eflux_Overview, pt_per_unit = 1)
-println("Saved: ", pic_name1, " at ", save_path)
-im = 2
-pic_name2 = "MINPA_He++eflux_Overview"* ts_str * ".pdf"
-TW_MINPA_eflux_Overview = TW_MINPA_eflux_Overview_plot(minpa_data, time_range, im)
-save(joinpath(save_path, pic_name2), TW_MINPA_eflux_Overview, pt_per_unit = 1)
-println("Saved: ", pic_name2, " at ", save_path)
-im = 4
-pic_name3 = "MINPA_O+eflux_Overview"* ts_str * ".pdf"
-TW_MINPA_eflux_Overview = TW_MINPA_eflux_Overview_plot(minpa_data, time_range, im)
-save(joinpath(save_path, pic_name3), TW_MINPA_eflux_Overview, pt_per_unit = 1)
-println("Saved: ", pic_name3, " at ", save_path)
-im = 6
-pic_name6 = "MINPA_O2+eflux_Overview"* ts_str * ".pdf"
-TW_MINPA_eflux_Overview = TW_MINPA_eflux_Overview_plot(minpa_data, time_range, im)
-save(joinpath(save_path, pic_name6), TW_MINPA_eflux_Overview, pt_per_unit = 1)
-println("Saved: ", pic_name6, " at ", save_path)
-im = 7
-pic_name7 = "MINPA_CO2+eflux_Overview"* ts_str * ".pdf"
-TW_MINPA_eflux_Overview = TW_MINPA_eflux_Overview_plot(minpa_data, time_range, im)
-save(joinpath(save_path, pic_name7), TW_MINPA_eflux_Overview, pt_per_unit = 1)
-println("Saved: ", pic_name7, " at ", save_path)
+h_list = minpa_Info[:ts_list]
+img_list = [1, 2, 5, 6, 7]
+
+sp_title = ["H+", "He++", "m/q=4.573966", "m/q=9.22163", 
+    "O+", "O2+", "CO2+", "m/q=69.26344"]
+sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")), 
+    rich("m/q=4.573966"), rich("m/q=9.22163"), rich(rich("O"), superscript("+")), 
+    rich(rich("O"), subscript("2"), superscript("+")), rich(rich("CO"), 
+    subscript("2"), superscript("+")), rich("m/q=69.26344")]
+
+using CairoMakie
+CairoMakie.activate!()
+set_theme!(;
+    Axis=(; bordercolor=:black, bordersize=15, spinewidth = 3, 
+        xlabelsize=18, ylabelsize=18, xticklabelsize=16, yticklabelsize=16)
+)
+
+for img in img_list
+    for i in 1:length(h_list)
+        xd = minpa_Info[:time_list][i]
+        name = "MINPA_mod" * string(mod) * "_" * sp_title[img] * "eflux_Overview" * Dates.format(xd[1], "yyyymmddTHH") * ".pdf"
+        fig = TW_MINPA_eflux_Overview_plot(minpa_data, xd, img)
+        save(joinpath(overview_path, name), fig, pt_per_unit = 1)
+        println("Saved figure: ", joinpath(overview_path, name))
+    end
+end

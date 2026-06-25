@@ -33,7 +33,6 @@ println("Output path: ", Overview_path)
 
 sta_data = MAVEN_load.load_STATIC(STA_file[1])
 
-img = 1
 sp_title = ["H+", "He++", "m/q=4.573966", "m/q=9.22163", 
     "O+", "O2+", "CO2+", "m/q=69.26344"]
 sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")), 
@@ -42,24 +41,26 @@ sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")),
     subscript("2"), superscript("+")), rich("m/q=69.26344")]
 
 h_list = 0:3:24
+# h_list = [7]
 img_list = [1, 2, 5, 6, 7]
+wave_time = DateTime(2022, 8, 24, 07, 30, 18)
 
 for img in img_list
     title = rich("MAVEN STATIC ") * sp[img] * rich(rich(" Differential Energy Flux (cm"), 
         superscript("-2"), rich("s"), superscript("-1"), rich("sr"), 
         superscript("-1"), rich(")"))
     for hstart in h_list
-        xd = DateTime.(date + Dates.Hour(hstart) .+ Dates.Minute(30) .* range(0, 6))
+        xd = DateTime.(date + Dates.Hour(hstart) .+ Dates.Minute(10) .* range(0, 6))
         name = "MVN_STATIC_" * sp_title[img] * "eflux_Overview_" * Dates.format(xd[1], "yyyymmddTHH") * ".pdf"
-        fig = MAVEN_plot.MVN_STATIC_eflux_Overview_plot(img, sta_data, xd)
+        fig = MAVEN_plot.MVN_STATIC_eflux_Overview_plot(img, sta_data, xd, wave_times=[wave_time])
         Label(fig[0, :], title, fontsize=20, tellwidth=false)
         save(joinpath(Overview_path, name), fig, pt_per_unit = 1)
         println("Saved figure: ", joinpath(Overview_path, name))
     end
-    xd_total = DateTime.(date + Dates.Hour(0) .+ Dates.Hour(4) .* range(0, 6)) 
-    name = "MVN_STATIC_" * sp_title[img] * "eflux_Overview_" * Dates.format(xd_total[1], "yyyymmdd") * "_total.pdf"
-    fig = MAVEN_plot.MVN_STATIC_eflux_Overview_plot(img, sta_data, xd_total)
-    Label(fig[0, :], title, fontsize=20, tellwidth=false)
-    save(joinpath(Overview_path, name), fig, pt_per_unit = 1)
-    println("Saved figure: ", joinpath(Overview_path, name))
+    # xd_total = DateTime.(date + Dates.Hour(0) .+ Dates.Hour(4) .* range(0, 6)) 
+    # name = "MVN_STATIC_" * sp_title[img] * "eflux_Overview_" * Dates.format(xd_total[1], "yyyymmdd") * "_total.pdf"
+    # fig = MAVEN_plot.MVN_STATIC_eflux_Overview_plot(img, sta_data, xd_total, wave_times=[wave_time])
+    # Label(fig[0, :], title, fontsize=20, tellwidth=false)
+    # save(joinpath(Overview_path, name), fig, pt_per_unit = 1)
+    # println("Saved figure: ", joinpath(Overview_path, name))
 end

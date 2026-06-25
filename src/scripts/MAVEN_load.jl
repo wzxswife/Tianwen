@@ -859,12 +859,12 @@ function ion_energy2v(energy, mass) # 离子子能量对应速度(相对论)
     v = β .* 3e8
     return v
 end
-function  cyclone_frequency(B; mass = Me) 
+function cyclone_frequency(B; mass = Me) 
     # 计算离子子的回旋频率, 默认电子, B nT
     f = Q * B*1e-9 / (2 * π * mass)
     return f
 end
-function  cyclone_R(v,B; mass = Me) 
+function cyclone_R(v,B; mass = Me) 
     # 计算离子子的回旋半径, 默认电子,v m/s B nT
     R = v / (cyclone_frequency(B; mass) * 2 * π) # m
     return R
