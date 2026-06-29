@@ -238,25 +238,44 @@ end
 画磁场数据（测试通过）
 """
 # 总磁场大小
-function plot_B_total(ax, data::Dict, time_range::Vector{DateTime})
-    local lw = 0.8
+function plot_B_total(ax, data::Dict, time_range::Vector{DateTime};
+    lw=1.0)
     local dataB = find_avail_data(data, time_range, 
         [:epoch, :B_total, :JulUTtime])
     local xtk = datetime2julian.(time_range)
-    local t0 = dataB[:JulUTtime][1]
-    xtk = xtk .- t0
+    # local t0 = dataB[:JulUTtime][1]
+    # xtk = xtk .- t0
     xlims!(ax, xtk[1], xtk[end])
     ylims!(ax, minimum(dataB[:B_total])-1.0, maximum(dataB[:B_total])+1.0)
-    lines!(ax, dataB[:JulUTtime].-t0, dataB[:B_total]; 
+    lines!(ax, dataB[:JulUTtime], dataB[:B_total]; 
         label = L"$B_{\mathrm{total}}$", 
         color=:black, linewidth=lw, overdraw = true)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
 end
 # 磁场三分量
-function plot_B(ax, data::Dict, time_range::Vector{DateTime})
-    local lw = 0.8
+function plot_B(ax, data::Dict, time_range::Vector{DateTime}; 
+    lw=1.0)
     local dataB = find_avail_data(data, time_range, 
         [:epoch, :B, :JulUTtime])
+    local xtk = datetime2julian.(time_range)
+    # local t0 = dataB[:JulUTtime][1]
+    # xtk = xtk .- t0
+    xlims!(ax, xtk[1], xtk[end])
+    ylims!(ax, minimum(dataB[:B])-1.0, maximum(dataB[:B])+1.0)
+    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 1]; 
+        label = L"$B_{\mathrm{x}}$", linewidth=lw, overdraw = true)
+    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 2]; 
+        label = L"$B_{\mathrm{y}}$", linewidth=lw, overdraw = true)
+    lines!(ax, dataB[:JulUTtime], dataB[:B][:, 3]; 
+        label = L"$B_{\mathrm{z}}$", linewidth=lw, overdraw = true)
+    ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+end
+function plot_wave(ax, data::Dict, time_range::Vector{DateTime}; 
+    lw=1.0, labels=true)
+    local dataB = find_avail_data(data, time_range, 
+        [:epoch, :B, :JulUTtime])
+    local Bmean = mean(dataB[:B], dims=1)
+    local dataB[:B] = dataB[:B] .- Bmean
     local xtk = datetime2julian.(time_range)
     local t0 = dataB[:JulUTtime][1]
     xtk = xtk .- t0
@@ -269,6 +288,20 @@ function plot_B(ax, data::Dict, time_range::Vector{DateTime})
     lines!(ax, dataB[:JulUTtime].-t0, dataB[:B][:, 3]; 
         label = L"$B_{\mathrm{z}}$", linewidth=lw, overdraw = true)
     ax.xticks = (xtk, Dates.format.(time_range, "HH:MM:SS"))
+    if labels
+        B0 = sqrt(Bmean[1]^2+Bmean[2]^2+Bmean[3]^2)
+        B0str = round(B0; digits=1)
+        lcn = Makie.wong_colors()
+        axislegend(ax,
+            [LineElement(color = (:white, 0.0)) for _ in 1:5],
+            [rich(rich("MSO"), color = "black"),
+            rich(rich("B"), subscript("x"), color = lcn[1]),
+            rich(rich("B"), subscript("y"), color = lcn[2]),
+            rich(rich("B"), subscript("z"), color = lcn[3]), 
+            rich(rich("B"), subscript("0"), rich(" = $B0str nT"), color = "black")];
+            framevisible = false, position = :rt, labelsize=30, 
+            orientation = :horizontal)
+    end
 end
 
 """
@@ -320,12 +353,18 @@ function plot_MVA(ax1, ax2, ax3, mag_wave::Matrix{Float64};
 
     local lims_max = ceil(maximum(abs.(bWaveMVA)))
     local lims_min = -lims_max
-    ax1.xlabel = "B min"
-    ax1.ylabel = "B max"
-    ax2.xlabel = "B min"
-    ax2.ylabel = "B mid"
-    ax3.xlabel = "B max"
-    ax3.ylabel = "B mid"
+    # ax1.xlabel = "B min"
+    # ax1.ylabel = "B max"
+    # ax2.xlabel = "B min"
+    # ax2.ylabel = "B mid"
+    # ax3.xlabel = "B max"
+    # ax3.ylabel = "B mid"
+    ax1.xlabel = rich("Normal B")*subscript("N")*rich(" (nT)")
+    ax1.ylabel = rich("Maximally Varying B")*subscript("L")*rich(" (nT)")
+    ax2.xlabel = rich("Normal B")*subscript("N")*rich(" (nT)")
+    ax2.ylabel = rich("Intermediately Varing B")*subscript("M")*rich(" (nT)")
+    ax3.xlabel = rich("Maximally Varing B")*subscript("L")*rich(" (nT)")
+    ax3.ylabel = rich("Intermediately Varing B")*subscript("M")*rich("(nT)")
 
     limits!(ax1, lims_min, lims_max, lims_min, lims_max)
     limits!(ax2, lims_min, lims_max, lims_min, lims_max)

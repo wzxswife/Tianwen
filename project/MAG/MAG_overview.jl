@@ -44,6 +44,10 @@ const Rm = 3389.5
 mag_data[:position] = mag_data[:position]./Rm
 
 time_range = DateTime(date, Time(7, 24, 00)).+Dates.Minute(2) .* range(0, 6)
+shock_time = DateTime(date, Time(7, 27, 20))
+wave_time = DateTime(date, Time(7, 30, 18))
+shockJUL = datetime2julian.(shock_time)
+waveJUL = datetime2julian.(wave_time)
 
 CairoMakie.activate!()
 size_inches = (20, 18)
@@ -62,35 +66,23 @@ ax1 = Axis(fig[1,1:3], aspect=DataAspect(),
     xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
     ylabel=L"$\sqrt{y^2+z^2}$ ($R_{\mathrm{M}}$)")
 MAG_plot.bowshock_plot_xr(ax1;xlim=xlim1,ylim=(0,5))
-MAG_plot.plot_spacecraft_orbit_xr(ax1,mag_data,[time_range[1]];xlim=xlim1,ylim=(0,5))
+MAG_plot.plot_spacecraft_orbit_xr(ax1,mag_data,[time_range[1],shock_time,time_range[end]];
+    xlim=xlim1,ylim=(0,5))
 
+idx = findall(time_range[1].<mag_data[:epoch].<time_range[end])
 ax2 = Axis(fig[2, 1:3], ylabel = L"Magnetic $\mathbf{B}$ (nT)")
 MAG_plot.plot_B_total(ax2, mag_data, time_range)
 MAG_plot.plot_B(ax2, mag_data, time_range)
 ax2.xticklabelsvisible=false
+ax2_ymax = max(maximum(mag_data[:B][idx,:]),maximum(mag_data[:B_total][idx]))+1.0
+ylims!(min(minimum(mag_data[:B][idx,:]),minimum(mag_data[:B_total][idx]))-1.0, ax2_ymax)
 Legend(fig[2, 4], ax2)
 
 ax3 = Axis(fig[3, 1:3], ylabel = L"Period T(s)", yscale = log2)
-hm = MAG_plot.plot_wavelet(ax3, mag_data, time_range, 1/32.0)
+hm = MAG_plot.plot_wavelet(ax3, mag_data, time_range, 1/32.0; ylim=(1/8.0, 8.0))
 Colorbar(fig[3, 4], hm, label = L"Wavelet Power $P_{\mathrm{B}}$")
 
-# ---------- 对齐 ax2 与 ax3 时间轴 ----------
 full_jd = datetime2julian.(time_range)
-jd_lo, jd_hi = extrema(full_jd)
-# 计算 plot_B 内部用的 t0 (第一个有效数据的 JulUTtime)
-idx_r = findall(minimum(time_range) .<= mag_data[:epoch] .<= maximum(time_range))
-if haskey(mag_data, :position)
-    nan_r = any(isnan.(mag_data[:position][idx_r, :]), dims=2)[:]
-    idx_r = idx_r[.!nan_r]
-end
-if haskey(mag_data, :B)
-    nan_r = any(isnan.(mag_data[:B][idx_r, :]), dims=2)[:]
-    idx_r = idx_r[.!nan_r]
-end
-t0_B = mag_data[:JulUTtime][idx_r[1]]
-# 统一设置为相同物理时间范围
-xlims!(ax2, jd_lo - t0_B, jd_hi - t0_B)
-xlims!(ax3, jd_lo, jd_hi)
 
 # ---------- 底部位置信息 ----------
 tick_idx = [argmin(abs.(mag_data[:epoch] .- t)) for t in time_range]
@@ -110,10 +102,36 @@ ax3.xticks = (full_jd, [
     )
     for i in eachindex(time_range)
 ])
-# 表头：放在 ax3 左侧边栏（ylabel 同竖线），底部与 xtick 平齐
-# Label(fig[3, 1, Left()], L"UT\n$X_{MSO}$\n$Y_{MSO}$\n$Z_{MSO}$",
-#     fontsize = 22, halign = :left, valign = :bottom,
-#     tellheight = false, tellwidth = false)
+Label(fig[3, 1:3, BottomLeft()], rich("UT\n") * rich(rich("X"), subscript("MSO"), "\n") *
+    rich(rich("Y"), subscript("MSO"), "\n") * rich(rich("Z"), subscript("MSO")),
+    fontsize = 22, halign = :left,  valign = :bottom, 
+    # offset = (10, -5),
+    justification = :left, lineheight = 1.5,
+    padding = (-10, 0, 0, 0),
+    tellheight = true, tellwidth = true
+)
+
+if !isempty(shockJUL)
+    vlines!(ax2, shockJUL; color=:black, linewidth=2, linestyle=:dash)
+    vlines!(ax3, shockJUL; color=:black, linewidth=2, linestyle=:dash)
+    text!(ax2, shockJUL, ax2_ymax; text=" Bow Shock",
+        color=:black, fontsize=20, align=(:left, :top))
+    text!(ax3, shockJUL, 8.0; text=" Bow Shock",
+        color=:black, fontsize=20, align=(:left, :top))
+end
+if !isempty(waveJUL)
+    vlines!(ax2, waveJUL; color=:red, linewidth=2, linestyle=:dash)
+    vlines!(ax3, waveJUL; color=:red, linewidth=2, linestyle=:dash)
+    text!(ax2, waveJUL, ax2_ymax; text=" Wave",
+        color=:red, fontsize=20, align=(:left, :top))
+    text!(ax3, waveJUL, 8.0; text=" Wave",
+        color=:red, fontsize=20, align=(:left, :top))
+end
+
+# 子图序号标注
+text!(ax1, 0.02, 0.98, text="(a)", space=:relative, fontsize=30, align=(:left, :top))
+text!(ax2, 0.02, 0.98, text="(b)", space=:relative, fontsize=30, align=(:left, :top))
+text!(ax3, 0.02, 0.98, text="(c)", space=:relative, fontsize=30, align=(:left, :top))
 
 name = "MAG_Overview_" * Dates.format(time_range[1], "yyyymmddTHHMM") * 
        "_to_" * Dates.format(time_range[end], "HHMM") * ".pdf"

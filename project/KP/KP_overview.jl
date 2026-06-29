@@ -215,6 +215,8 @@ fig = Figure(size = size_pt, fontsize = 24, figure_padding = (5,20, 9, 10), rowg
 set_theme!(;
     Axis=(backgroundcolor = :white,
         bordercolor=:black, bordersize=15, spinewidth = 2, 
+        xticksize=8, xminorticksize=4, yticksize=8, yminorticksize=4,
+        xtickwidth = 2, ytickwidth = 2, xminortickwidth = 1, yminortickwidth = 1,
         xlabelsize=26, ylabelsize=26, xticklabelsize=22, yticklabelsize=22, 
         xminorticksvisible = true, yminorticksvisible = true,
         xminorticks = IntervalsBetween(10), yminorticks = IntervalsBetween(10))
@@ -235,7 +237,17 @@ ax2.xticklabelsvisible=false
 ax3.xticklabelsvisible=false
 
 xlims!(ax1, datetime2julian(epoch[1]), datetime2julian(epoch[end]))
+ylims!(ax1, -10, 10)
+ylims!(ax2, 320, 600)
+ylims!(ax3, 0, 30)
+ylims!(ax4, 0, 40)
 linkxaxes!(ax1, ax2, ax3, ax4)
+
+# 子图序号标注
+text!(ax1, 0.02, 0.98, text="(a)", space=:relative, fontsize=30, align=(:left, :top))
+text!(ax2, 0.02, 0.98, text="(b)", space=:relative, fontsize=30, align=(:left, :top))
+text!(ax3, 0.02, 0.98, text="(c)", space=:relative, fontsize=30, align=(:left, :top))
+text!(ax4, 0.02, 0.98, text="(d)", space=:relative, fontsize=30, align=(:left, :top))
 
 scatter!(ax1, timeJUL, mag; markersize=2, color="black")
 scatter!(ax1, timeJUL, magMSOX; markersize=2)
@@ -249,7 +261,8 @@ axislegend(ax1,
      rich(rich("B"), subscript("x"), rich("MSO"), color = lcn[1]),
      rich(rich("B"), subscript("y"), rich("MSO"), color = lcn[2]),
      rich(rich("B"), subscript("z"), rich("MSO"), color = lcn[3])];
-    framevisible = false, position = :rt, labelsize=22)
+    framevisible = false, position = :rt, labelsize=22, 
+    orientation = :horizontal)
 scatter!(ax2, timeJUL, velocity; markersize=2, color = "black")
 scatter!(ax3, timeJUL, HDensity; markersize=2, color = "black")
 scatter!(ax4, timeJUL, HTem; markersize=2, color = "black")
