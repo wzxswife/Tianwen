@@ -2,7 +2,7 @@ module SphericalSplines
 
 using LinearAlgebra
 
-export InterpolationSpline, SmoothingSpline
+export InterpolationSpline, SmoothingSpline, SplineSolution
 
 
 """
@@ -74,7 +74,7 @@ vectors.
 
 """
 function Green(a::Vector, b::Vector)
-    d = dot(a, b)
+    d = clamp(dot(a, b), -1.0, 1.0)
     if d ≈ 1.0
         return 1.0 / (4π)
     elseif d ≈ -1.0

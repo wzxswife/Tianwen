@@ -1,6 +1,6 @@
 using CommonDataFormat
 using Dates, CSV, DataFrames
-using Statistics
+using Statistics, LinearAlgebra
 using CairoMakie
 include("../../src/scripts/MAVEN_load.jl")
 include("../../src/scripts/MAVEN_plot.jl")
@@ -12,14 +12,14 @@ using .MAVEN_SWIA
 using .MAVEN_STATIC
 
 date = DateTime(2022, 8, 24)
-ts = DateTime.(date + Dates.Hour(0) + Dates.Minute(30))
+ts = DateTime.(date + Dates.Hour(6) + Dates.Minute(30))
 
 time_stemp = ts .+ Dates.Minute(30) .* range(0, 3)
 
 date_str = Dates.format.(time_stemp[1], "yyyymmdd")
 date_str_dye = "$(year(time_stemp[1]))$(lpad(dayofyear(time_stemp[1]), 3, '0'))"
 
-save_name = "MAVEN_SWIA_Ion_VDF_2D_$(replace(string(time_stemp[1]), ":" => "-")).png"
+save_name = "MAVEN_SWIA_Ion_VDF_2D_$(replace(string(time_stemp[1]), ":" => "-")).pdf"
 save_path = joinpath(pwd(), "results", "IonBeam", save_name)
 data_path = joinpath(pwd(), "Data", "MAVEN", "mvn_swi_l2_coarsesvy3d_$(date_str)_v02_r01.cdf")
 quat_path = joinpath(pwd(), "Data", "MAVEN", "mvn_spice_swia_qu_$(date_str).csv")
@@ -144,7 +144,11 @@ for II in eachindex(time_stemp)
         xx = -p0
         xx = rott * xx * 100
         lines!(ax, [0, xx[1]], [0, xx[2]], color=:red, linewidth=3, linestyle=:dash) # 火星方向
-        # bb = rott * b0 * 100
+        bb = rott * b0
+        bb = bb ./ norm(bb) .* 200  # 归一化后缩放到 200 km/s 显示方向
+        lines!(ax, [0, bb[1]], [0, bb[2]]; color=:cyan, linewidth=3, linestyle=:dash) # 磁场方向
+        arrows!(ax, [Point2f(0, 0)], [Vec2f(bb[1], bb[2])];
+            color=:cyan, arrowsize=20, linewidth=3) # 磁场方向箭头
         vel_local = rott * vel
         # scatter!(ax, vel_local[1], vel_local[2], color=:white, markersize=15, marker='X') # 速度矢量
         # lines!(ax, [0, bb[1]], [0, bb[2]], color=:white, linewidth=3, linestyle=:dash)
@@ -168,3 +172,4 @@ Colorbar(fig_VDF[1:2, 5], limits=colorrange, label=rich("i",superscript("+")),
     colormap=:viridis, scale=log10)
 
 save(save_path, fig_VDF)
+println("Saved figure: ", save_path)

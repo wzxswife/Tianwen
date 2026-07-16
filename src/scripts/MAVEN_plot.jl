@@ -299,6 +299,11 @@ function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict,
             text!(ax, 0.0, 1.0, text = text, align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
             ylims!(ax, 1e1, 1e4)
+            
+            # energy_ev = 3000
+            # hlines!(ax, [energy_ev], color=:red, linewidth=2)
+            # text!(ax, xtk[end], energy_ev, text=rich(rich("$(round(energy_ev / 1000, digits=2)) keV", color=:red, fontweight=:bold)),
+            #     align=(:right, :bottom), fontsize=14, strokewidth=3, strokecolor=:black, color=:white)
 
             # # 在 xd 范围内沿时间平均，找出平均通量最大的能道，用红色横线标注能量值（keV）
             # if !isempty(ind)
@@ -726,6 +731,7 @@ function VDF_2d_slip(ax,velocity, data;
         return vars_mapped
     end
     function slice2d_cal_rot(v1, v2)
+        # 构造一个将 3D 速度矢量旋转到指定投影平面的旋转矩阵
         a = normalize(v1)
         d = normalize(v2)
         c = cross(a, d)

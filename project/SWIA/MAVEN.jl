@@ -40,7 +40,7 @@ time_range = start_time .+ Dates.Second(10) .* range(0, 6)
 using CairoMakie
 CairoMakie.activate!()
 
-fig = Figure(resolution = (1600, 1200))
+fig = Figure(size = (1600, 1200))
 ax1 = Axis(fig[1,1], aspect=DataAspect(), 
     xlabel=L"$x$ ($R_{\mathrm{M}}$)", 
     ylabel=L"$\sqrt{y^2+z^2}$ ($R_{\mathrm{M}}$)", 

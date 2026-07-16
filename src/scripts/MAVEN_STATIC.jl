@@ -6,6 +6,7 @@ module MAVEN_STATIC
 using TimesDates, Dates
 using Statistics
 using CommonDataFormat
+using Rotations
 
 # -------------------------Export parts-------------------------
 export static_c6_mass_mean,static_c6_energy_mean
@@ -169,6 +170,7 @@ end
 #   'DF'     :  units = '1/(cm^3-(km/s)^3)'               ;particle distribution function in 6 dimensional (3 spatial, 3 velocity) phase space; note that MMS uses 1/(km^6/cm^3)
 
 # 使用一个变量记录(ntime,nbin,nenergy,nmass)的数据,计算时根据情况将数据转为对应4D数据
+# 将 STATIC 的原始计数（counts）转换为相空间密度（phase space density, PSD），单位 s³/cm⁶
 function STA_count2df(dat) #计算df,需要导入static_slip取得的切片
     local nbins   = dat[:nbins]::Int16
     local nenergy = dat[:nenergy]::Int16
@@ -326,9 +328,9 @@ function static_slip(dat,time_ind) #取得static在指定时刻的切片,time_in
     for key in keys(dat)
         dat_slip[key] = dat[key]
     end
-    local swp_ind = dat[:swp_ind][time_ind]+1
-    local att_ind = dat[:att_ind][time_ind]+1
-    local eff_ind = dat[:eff_ind][time_ind]+1
+    local swp_ind = dat[:swp_ind][time_ind].+1
+    local att_ind = dat[:att_ind][time_ind].+1
+    local eff_ind = dat[:eff_ind][time_ind].+1
 
     dat_slip[:epoch]        = dat[:epoch][time_ind]
     dat_slip[:eflux]        = @views dat[:eflux][time_ind,:,:,:]
@@ -563,7 +565,7 @@ function static_rotation(dat;frame="MSO") #将STATIC数据在某时刻的切片�
     quat = QuatRotation(dat2[frame_t])
 
     xyz = sphere2xyz_for_static_rotation.(theta,phi);
-    xyz_mso = quat * xyz
+    xyz_mso = map(v -> quat * v, xyz)
     sphere_mso = xyz2sphere_for_static_rotation.(xyz_mso)
 
     thetaT=zeros(n_m,n_b,n_e)
