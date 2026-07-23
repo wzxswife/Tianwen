@@ -120,7 +120,10 @@ MVN_parastatic = MVN_Bmeanstatic ./ norm(MVN_Bmeanstatic) #unit vector of magnet
 i, j =2, 14
 ind = argmax(MVN_staticefluxmean[1, (j-1)*4+i, :] ./ MVN_staticenergy[1, 1, :, MVN_staticswpind, 1].^2)
 
-MVN_staticvswrough = CartesianFromSpherical()(CoordinateTransformations.Spherical(MVN_staticvelocity[1, (j-1)*4+i, ind, MVN_staticswpind, 1], deg2rad(MVN_staticphi[1, (j-1)*4+i, ind, MVN_staticswpind, 1]), deg2rad(MVN_statictheta[1, (j-1)*4+i, ind, MVN_staticswpind, 1])))
+MVN_staticvswrough = CartesianFromSpherical()
+    (CoordinateTransformations.Spherical(MVN_staticvelocity[1, (j-1)*4+i, ind, MVN_staticswpind, 1], 
+    deg2rad(MVN_staticphi[1, (j-1)*4+i, ind, MVN_staticswpind, 1]), 
+    deg2rad(MVN_statictheta[1, (j-1)*4+i, ind, MVN_staticswpind, 1])))
 MVN_staticdirections = [CartesianFromSpherical()(CoordinateTransformations.Spherical(1.0, deg2rad(MVN_staticphi[1, ij, ind, MVN_staticswpind, 1]), deg2rad(MVN_statictheta[1, ij, ind, MVN_staticswpind, 1]))) for ij in 1:64] #direction unit vectors
 MVN_staticss = [] #interpolation splines
 Snan = SphericalSplines.InterpolationSpline(stack(MVN_staticdirections; dims=1), fill(-30.0, 64))
