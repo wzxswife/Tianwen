@@ -16,7 +16,7 @@ datestr = Dates.format.(date, "yyyymmdd")
 year_num = Dates.format(date, "yyyy")
 month_num = Dates.format(date, "mm")
 
-ts = DateTime.(date + Dates.Hour(7) + Dates.Minute(26))
+ts = DateTime.(date + Dates.Hour(7) + Dates.Minute(29))
 time_stemp = ts .+ Dates.Minute(1) .* range(0, 3)
 # time_stemp = ts .+ Dates.Second(30) .* range(0, 3)
 
@@ -60,8 +60,13 @@ time_b = mag_data[:epoch]
 B_ss = mag_data[:B]
 position_mso = mag_data[:position]
 
-fig_name = "MAVEN_STATIC_H+_VDF_2D_" * Dates.format(time_stemp[1], "yyyymmddTHHMM")*
+phi_bin_idx = 12
+energy_range = [100, 10000] 
+fig_name = "MAVEN_STATIC_H+_VDF_2D_phi" * string(phi_bin_idx) * "_" * 
+    Dates.format(time_stemp[1], "yyyymmddTHHMM")*
     "-"*Dates.format(time_stemp[end], "HHMM")*".pdf"
+# fig_name = "MAVEN_STATIC_H+_VDF_2D_" * Dates.format(time_stemp[1], "yyyymmddTHHMM")*
+#     "-"*Dates.format(time_stemp[end], "HHMM")*".pdf"
 fig_VDF = Figure(resolution = (1000, 500))
 ticks = [-600, 0, 600]
 plot_range = (-800, 800)
@@ -92,25 +97,23 @@ for II in eachindex(time_stemp)
     v = reshape(V_data[:v], 32 * 64, 3)
     dF = reshape(V_data[:df], 32 * 64) .* 1e-3 # IS化 # unit sec^3/(cm^-3 km^-3) to sec^3 m^-6
     
-    # phi_bin_idx = 13
-    # energy_range = [1000, 10000] 
-    # # ---- phi[13] 以外的 df 置 0 ----
-    # nbins = 64
-    # nenergy = 32
-    # phi_bins = phi_bin_idx:16:nbins      # 所有 phi = phi[13] 的 bin 行索引
-    # phi_mask = falses(nbins, nenergy)
-    # phi_mask[phi_bins, :] .= true
-    # phi_mask_flat = vec(phi_mask)
-    # # ---- 能量范围筛选 ----
-    # energy_arr = sta_slip_data[:energy][1, :, :]  # (nbins, nenergy)
-    # energy_mask = (energy_arr .>= energy_range[1]) .& (energy_arr .<= energy_range[2])
-    # energy_mask_flat = vec(energy_mask)
-    # # 合并: 只保留 phi[13] 且 在能量范围内的数据
-    # keep_mask = phi_mask_flat .& energy_mask_flat
-    # # keep_mask = phi_mask_flat
-    # dF[.!keep_mask] .= 0.0
-    # n_keep = sum(keep_mask)
-    # println("$(Dates.format(sta_time, "HH:MM:SS")): $n_keep bins (phi=$(phi_bin_idx), energy $(energy_range[1])-$(energy_range[2]) eV)")
+    # ---- phi[13] 以外的 df 置 0 ----
+    nbins = 64
+    nenergy = 32
+    phi_bins = phi_bin_idx:16:nbins      # 所有 phi = phi[13] 的 bin 行索引
+    phi_mask = falses(nbins, nenergy)
+    phi_mask[phi_bins, :] .= true
+    phi_mask_flat = vec(phi_mask)
+    # ---- 能量范围筛选 ----
+    energy_arr = sta_slip_data[:energy][1, :, :]  # (nbins, nenergy)
+    energy_mask = (energy_arr .>= energy_range[1]) .& (energy_arr .<= energy_range[2])
+    energy_mask_flat = vec(energy_mask)
+    # 合并: 只保留 phi[13] 且 在能量范围内的数据
+    keep_mask = phi_mask_flat .& energy_mask_flat
+    # keep_mask = phi_mask_flat
+    dF[.!keep_mask] .= 0.0
+    n_keep = sum(keep_mask)
+    println("$(Dates.format(sta_time, "HH:MM:SS")): $n_keep bins (phi=$(phi_bin_idx), energy $(energy_range[1])-$(energy_range[2]) eV)")
 
     bins_sc = reshape(sta_slip_data[:bins_sc],64,1) .* ones(64,32)
     mask_bins_sc = reshape(bins_sc, 32 * 64)

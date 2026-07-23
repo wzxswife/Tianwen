@@ -77,8 +77,8 @@ function smooth_data(data::Matrix{Float64}, window::Int)
     return smoothed
 end
 
-function MVA(magbc)
-    local nb = length(magbc[:, 1])
+function MVA(magbc::AbstractMatrix)
+    local nb = size(magbc, 1)
     local bm = mean(magbc, dims=1)
     local muv = magbc' * magbc ./ nb - bm' * bm
     return eigen(muv)
