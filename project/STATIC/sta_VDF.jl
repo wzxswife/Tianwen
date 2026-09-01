@@ -16,7 +16,7 @@ datestr = Dates.format.(date, "yyyymmdd")
 year_num = Dates.format(date, "yyyy")
 month_num = Dates.format(date, "mm")
 
-ts = DateTime.(date + Dates.Hour(7) + Dates.Minute(29))
+ts = DateTime.(date + Dates.Hour(7) + Dates.Minute(26))
 time_stemp = ts .+ Dates.Minute(1) .* range(0, 3)
 # time_stemp = ts .+ Dates.Second(30) .* range(0, 3)
 
@@ -60,16 +60,16 @@ time_b = mag_data[:epoch]
 B_ss = mag_data[:B]
 position_mso = mag_data[:position]
 
-phi_bin_idx = 12
-energy_range = [100, 10000] 
-fig_name = "MAVEN_STATIC_H+_VDF_2D_phi" * string(phi_bin_idx) * "_" * 
-    Dates.format(time_stemp[1], "yyyymmddTHHMM")*
-    "-"*Dates.format(time_stemp[end], "HHMM")*".pdf"
-# fig_name = "MAVEN_STATIC_H+_VDF_2D_" * Dates.format(time_stemp[1], "yyyymmddTHHMM")*
+# phi_bin_idx = 12
+# energy_range = [100, 10000] 
+# fig_name = "MAVEN_STATIC_H+_VDF_2D_phi" * string(phi_bin_idx) * "_" * 
+#     Dates.format(time_stemp[1], "yyyymmddTHHMM")*
 #     "-"*Dates.format(time_stemp[end], "HHMM")*".pdf"
-fig_VDF = Figure(resolution = (1000, 500))
-ticks = [-600, 0, 600]
-plot_range = (-800, 800)
+fig_name = "MAVEN_STATIC_H+_VDF_2D_" * Dates.format(time_stemp[1], "yyyymmddTHHMM")*
+    "-"*Dates.format(time_stemp[end], "HHMM")*".pdf"
+fig_VDF = Figure(resolution = (1000, 750))
+ticks = [-1000, -500, 0, 500, 1000]
+plot_range = (-1200, 1200)
 colorbar_label = rich("STATIC ", spice_name, " VDF ", df_unit...)
 
 for II in eachindex(time_stemp)
@@ -97,23 +97,23 @@ for II in eachindex(time_stemp)
     v = reshape(V_data[:v], 32 * 64, 3)
     dF = reshape(V_data[:df], 32 * 64) .* 1e-3 # IS化 # unit sec^3/(cm^-3 km^-3) to sec^3 m^-6
     
-    # ---- phi[13] 以外的 df 置 0 ----
-    nbins = 64
-    nenergy = 32
-    phi_bins = phi_bin_idx:16:nbins      # 所有 phi = phi[13] 的 bin 行索引
-    phi_mask = falses(nbins, nenergy)
-    phi_mask[phi_bins, :] .= true
-    phi_mask_flat = vec(phi_mask)
-    # ---- 能量范围筛选 ----
-    energy_arr = sta_slip_data[:energy][1, :, :]  # (nbins, nenergy)
-    energy_mask = (energy_arr .>= energy_range[1]) .& (energy_arr .<= energy_range[2])
-    energy_mask_flat = vec(energy_mask)
-    # 合并: 只保留 phi[13] 且 在能量范围内的数据
-    keep_mask = phi_mask_flat .& energy_mask_flat
-    # keep_mask = phi_mask_flat
-    dF[.!keep_mask] .= 0.0
-    n_keep = sum(keep_mask)
-    println("$(Dates.format(sta_time, "HH:MM:SS")): $n_keep bins (phi=$(phi_bin_idx), energy $(energy_range[1])-$(energy_range[2]) eV)")
+    # # ---- phi[13] 以外的 df 置 0 ----
+    # nbins = 64
+    # nenergy = 32
+    # phi_bins = phi_bin_idx:16:nbins      # 所有 phi = phi[13] 的 bin 行索引
+    # phi_mask = falses(nbins, nenergy)
+    # phi_mask[phi_bins, :] .= true
+    # phi_mask_flat = vec(phi_mask)
+    # # ---- 能量范围筛选 ----
+    # energy_arr = sta_slip_data[:energy][1, :, :]  # (nbins, nenergy)
+    # energy_mask = (energy_arr .>= energy_range[1]) .& (energy_arr .<= energy_range[2])
+    # energy_mask_flat = vec(energy_mask)
+    # # 合并: 只保留 phi[13] 且 在能量范围内的数据
+    # keep_mask = phi_mask_flat .& energy_mask_flat
+    # # keep_mask = phi_mask_flat
+    # dF[.!keep_mask] .= 0.0
+    # n_keep = sum(keep_mask)
+    # println("$(Dates.format(sta_time, "HH:MM:SS")): $n_keep bins (phi=$(phi_bin_idx), energy $(energy_range[1])-$(energy_range[2]) eV)")
 
     bins_sc = reshape(sta_slip_data[:bins_sc],64,1) .* ones(64,32)
     mask_bins_sc = reshape(bins_sc, 32 * 64)
@@ -130,12 +130,15 @@ for II in eachindex(time_stemp)
     ax2 = Axis(fig_VDF[1, II], title=title, aspect=1, yticks=ticks, xticks=ticks, alignmode=Inside())
     hidexdecorations!(ax2, grid=false, ticks=false)
     ax3 = Axis(fig_VDF[2, II], aspect=1, yticks=ticks, xticks=ticks, alignmode=Inside())
-    linkxaxes!(ax2, ax3)
+    hidexdecorations!(ax3, grid=false, ticks=false)
+    ax4 = Axis(fig_VDF[3, II], aspect=1, yticks=ticks, xticks=ticks, alignmode=Inside())
+    linkxaxes!(ax2, ax4)
     ax2, rot2, ind_mask = MAVEN_plot.VDF_2d_slip(
-            ax2,v,dF; 
-            normal_vectors=[rotation_Q'*v for v in [[1,0,0], [0,1,0]]], 
-            colorrange=colorrange, vbluk=vel, plot_range=plot_range, 
-            vsc=vsc,magf=b0,return_rot_matrix=true, angle_range=[-30, 30])
+        ax2,v,dF; 
+        normal_vectors=[rotation_Q'*v for v in [[1,0,0], [0,1,0]]], 
+        colorrange=colorrange, vbluk=vel, plot_range=plot_range, 
+        vsc=vsc,magf=b0,return_rot_matrix=true, angle_range=[-30, 30], 
+        xlabel=X_vdf_label)
     for i in keys_range
         local val = reshape(sta_slip_data[i][1,:,:],32*64)
         range_data[i] = val[ind_mask.*mask_bins_sc .==1]
@@ -152,10 +155,21 @@ for II in eachindex(time_stemp)
         range_data[i] = val[ind_mask.*mask_bins_sc .==1]
     end
     ax3 = MAVEN_plot.VDF_2d_mask(ax3,range_data;rot = rot3, vsc=vsc)
+    ax4, rot4, ind_mask = MAVEN_plot.VDF_2d_slip(
+        ax4,v,dF; 
+        normal_vectors=[rotation_Q'*v for v in [[0,1,0], [0,0,1]]], 
+        colorrange=colorrange, vbluk=vel, plot_range=plot_range, 
+        vsc=vsc,magf=b0, return_rot_matrix=true, angle_range=[-30, 30], 
+        xlabel=Y_vdf_label)
+    for i in keys_range
+        local val = reshape(sta_slip_data[i][1,:,:],32*64)
+        range_data[i] = val[ind_mask.*mask_bins_sc .==1]
+    end
+    ax4 = MAVEN_plot.VDF_2d_mask(ax4,range_data;rot = rot4, vsc=vsc)
 
-    for i in 1:2
-        rott = [rot2, rot3][i]
-        ax = [ax2, ax3][i]
+    for i in 1:3
+        rott = [rot2, rot3, rot4][i]
+        ax = [ax2, ax3, ax4][i]
         xx = -x0
         xx = rott * xx * 100
         # lines!(ax, [0, xx[1]], [0, xx[2]], color=:red, linewidth=3, linestyle=:dash) # 火星方向
@@ -175,14 +189,16 @@ for II in eachindex(time_stemp)
         # ax1.ylabel = Y_label
         ax2.ylabel = Y_vdf_label
         ax3.ylabel = Z_vdf_label
+        ax4.ylabel = Z_vdf_label
     else
         # hideydecorations!(ax1, grid=false, ticks=false)
         hideydecorations!(ax2, grid=false, ticks=false)
         hideydecorations!(ax3, grid=false, ticks=false)
+        hideydecorations!(ax4, grid=false, ticks=false)
     end
-    hidexdecorations!(ax3, label=false, grid=false, ticks=false, ticklabels=false)
+    hidexdecorations!(ax3, label=true, grid=false, ticks=false, ticklabels=false)
 end
-Colorbar(fig_VDF[1:2, 5], label=colorbar_label, 
+Colorbar(fig_VDF[1:3, 5], label=colorbar_label, 
     limits=colorrange, colormap=:viridis, scale=log10)
 
 save(joinpath(VDF_path, fig_name), fig_VDF)

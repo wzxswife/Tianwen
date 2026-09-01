@@ -298,7 +298,7 @@ function MVN_STATIC_eflux_Overview_plot(im::Int, sta_data::Dict,
             local text = rich("θ=$i ϕ=$j")
             text!(ax, 0.0, 1.0, text = text, align = (:left, :top), offset = (4, -2), space = :relative, fontsize = 20, color = :white)
             xlims!(ax, xtk[begin], xtk[end]) 
-            ylims!(ax, 1e1, 1e4)
+            ylims!(ax, 1e1, 3e4)
             
             # energy_ev = 3000
             # hlines!(ax, [energy_ev], color=:red, linewidth=2)

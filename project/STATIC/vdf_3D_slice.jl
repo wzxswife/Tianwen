@@ -114,7 +114,7 @@ MVN_staticjulianmean = MVN_staticjulian[MVN_staticindmean]
 MVN_static2msomean = QuatRotation(MVN_staticquat_mso[MVN_staticindmean, :])
 MVN_Bmeanstatic = MVN_static2msomean' * MVN_Bmeanmso
 MVN_parastatic = MVN_Bmeanstatic ./ norm(MVN_Bmeanstatic)
-swi, swj =2, 13
+swi, swj = 2, 12
 ind = argmax(MVN_staticefluxmean[1, (swj-1)*4+swi, :] ./ MVN_staticenergy[1, 1, :, MVN_staticswpind, 1].^2)
 MVN_staticvswrough = CartesianFromSpherical()(CoordinateTransformations.Spherical(
     MVN_staticvelocity[1, (swj-1)*4+swi, ind, MVN_staticswpind, 1], 
@@ -355,17 +355,21 @@ end
 plane_corners = make_plane_corners(plane_origin, u_vec, v_vec, (-1000, 1000), (-1000, 1000))
 lines!(ls1, plane_corners, color = :cyan, linewidth = 1.5, linestyle = :dash)
 
-# 太阳风速度方向箭头 (MFA坐标)
+# 太阳风速度方向箭头 (MFA坐标, 固定长度600 km/s)
 MVN_vsw_mfa = MVN_static2mfa * MVN_staticvswrough  # 静态坐标→MFA坐标
+vsw_dir = MVN_vsw_mfa ./ norm(MVN_vsw_mfa)
+vsw_arrow_len = 600.0  # 固定箭头长度 (km/s)
 ps_vsw = Point3f(0.0, 0.0, 0.0)
-pe_vsw = Point3f(MVN_vsw_mfa...)
+pe_vsw = Point3f(vsw_dir .* vsw_arrow_len...)
 linesegments!(ls1, [ps_vsw, pe_vsw], color = :red, linewidth = 8, overdraw = true)
 arrows3d!(ls1, ps_vsw, pe_vsw, argmode = :endpoint,
     color = :red, shaftradius = 0.1, tipradius = 0.2, tailradius = 0.06, overdraw = true)
 
-# 反射方向箭头 (橙色)
+# 反射方向箭头 (橙色, 固定长度600 km/s)
+ref_dir = v_reflected ./ norm(v_reflected)
+ref_arrow_len = 600.0  # 固定箭头长度 (km/s)
 ps_ref = Point3f(0.0, 0.0, 0.0)
-pe_ref = Point3f(v_reflected...)
+pe_ref = Point3f(ref_dir .* ref_arrow_len...)
 linesegments!(ls1, [ps_ref, pe_ref], color = :orange, linewidth = 6, overdraw = true)
 arrows3d!(ls1, ps_ref, pe_ref, argmode = :endpoint,
     color = :orange, shaftradius = 0.08, tipradius = 0.15, tailradius = 0.05, overdraw = true)
@@ -423,6 +427,135 @@ Colorbar(fig[1, 3], hm2, label = "Differential Energy Flux")
 
 save(joinpath(VDF_path, fig_name), fig)
 println("Saved: ", joinpath(VDF_path, fig_name))
+
+# ═══════════════════════════════════════════════════════
+#  新图: 3D VDF 每个vpara切片投影到截面上 (MIP)
+# ═══════════════════════════════════════════════════════
+
+# 截面投影坐标轴 (与截面heatmap一致)
+n_proj = 200
+s_range = (-1000.0, 1000.0)
+t_range = (-1000.0, 1000.0)
+s_grid = range(s_range[1], s_range[2], length=n_proj)
+t_grid = range(t_range[1], t_range[2], length=n_proj)
+
+# 将3D MFA坐标投影到截面2D坐标 (s, t)
+# p = vperp1 * e1 + vpara * e2 + vperp2 * e3
+# s = dot(p, u_vec), t = dot(p, v_vec)
+function project_mfa_to_slice(vperp1, vpara_val, vperp2, u, v, e1, e2, e3)
+    p = vperp1 .* e1 .+ vpara_val .* e2 .+ vperp2 .* e3
+    s = dot(p, u)
+    t = dot(p, v)
+    return s, t
+end
+
+# 计算投影: 遍历每个vpara切片, 将其所有点投影到截面, 取最大值(MIP)
+println("Computing slice projection (MIP)...")
+n_vp = length(vpara)
+n_vp1 = length(vperp1)
+n_vp2 = length(vperp2)
+proj_mip = fill(-Inf64, n_proj, n_proj)  # Maximum Intensity Projection
+
+ds = step(s_grid)
+dt = step(t_grid)
+
+for ipara in 1:n_vp
+    for i1 in 1:n_vp1, i2 in 1:n_vp2
+        val = MVN_static_eflux_rect[i1, ipara, i2]
+        isnan(val) && continue
+        # 该点的3D MFA坐标
+        p = vperp1[i1] .* MVN_perpstatic1 .+ vpara[ipara] .* MVN_parastatic .+ vperp2[i2] .* MVN_perpstatic2
+        s_coord = dot(p, u_vec)
+        t_coord = dot(p, v_vec)
+        # 映射到投影网格索引
+        is_idx = round(Int, (s_coord - s_range[1]) / ds) + 1
+        it_idx = round(Int, (t_coord - t_range[1]) / dt) + 1
+        if 1 <= is_idx <= n_proj && 1 <= it_idx <= n_proj
+            proj_mip[is_idx, it_idx] = max(proj_mip[is_idx, it_idx], val)
+        end
+    end
+    mod(ipara, 5) == 0 && println("  vpara slice $ipara/$n_vp done")
+end
+
+# 将 -Inf 替换为 NaN (无数据区域)
+proj_mip[.!isfinite.(proj_mip)] .= NaN
+
+println("Projection done. Finite points: $(count(isfinite, proj_mip))/$(n_proj*n_proj)")
+
+# 将3D方向投影到截面2D坐标 (s, t)
+function project_to_plane(v3d, u, v)
+    s = dot(v3d, u)
+    t = dot(v3d, v)
+    return s, t
+end
+
+# 太阳风方向投影到截面
+vsw_proj_s, vsw_proj_t = project_to_plane(MVN_vsw_mfa, u_vec, v_vec)
+# 反射方向投影到截面
+ref_proj_s, ref_proj_t = project_to_plane(v_reflected, u_vec, v_vec)
+# 激波法向投影到截面
+shock_proj_s, shock_proj_t = project_to_plane(n_shock_mfa, u_vec, v_vec)
+
+# 固定箭头长度 600 km/s
+arrow_scale = 600.0 / max(norm(MVN_vsw_mfa), 1e-6)
+
+# 新figure
+fig2_name = "MAVEN_STATIC_H+_VDF_slice_proj_" * Dates.format(ts, "yyyymmddTHHMMSS") *
+    "-" * Dates.format(te, "HHMMSS") * ".png"
+
+fig2 = Figure(size = (800, 700), fontsize = 14, figure_padding = (5, 10, 9, 8))
+Label(fig2[1, 1, Top()],
+    "MAVEN STATIC H⁺ VDF — Slice Projection (MIP)\n" *
+    Dates.format(ts, "yyyymmdd HH:MM") * "-" * Dates.format(te, "HH:MM"),
+    fontsize = 15, tellheight = true)
+
+ax3 = Axis(fig2[2, 1],
+    xlabel = "û (km/s)",
+    ylabel = "v̂ (km/s)",
+    title = "n̂ = $(round.(plane_normal, digits=3))",
+    aspect = 1)
+
+# 截面投影 heatmap (MIP)
+# CairoMakie heatmap 需要转置: 数据[i,j] → x=j, y=i
+hm3 = heatmap!(ax3, collect(s_grid), collect(t_grid), proj_mip',
+    colormap = :gist_earth, colorrange = (1e4, 1e8), colorscale = log10)
+
+# 太阳风方向 (红色箭头, 固定600 km/s)
+vsw_s = vsw_proj_s * arrow_scale
+vsw_t = vsw_proj_t * arrow_scale
+arrows!(ax3, [0.0], [0.0], [vsw_s], [vsw_t],
+    color = :red, linewidth = 3, arrowsize = 20, lengthscale = 1.0)
+text!(ax3, "  Vsw", position = (vsw_s, vsw_t),
+    fontsize = 12, color = :red, font = :bold, align = (:left, :center))
+
+# 反射方向 (橙色箭头, 固定600 km/s)
+ref_s = ref_proj_s * arrow_scale
+ref_t = ref_proj_t * arrow_scale
+arrows!(ax3, [0.0], [0.0], [ref_s], [ref_t],
+    color = :orange, linewidth = 3, arrowsize = 20, lengthscale = 1.0)
+text!(ax3, "  Vref", position = (ref_s, ref_t),
+    fontsize = 12, color = :orange, font = :bold, align = (:left, :center))
+
+# 激波法向 (白色虚线, 固定600 km/s)
+shock_s = shock_proj_s * arrow_scale
+shock_t = shock_proj_t * arrow_scale
+if abs(shock_s) > 1.0 || abs(shock_t) > 1.0
+    lines!(ax3, [0.0, shock_s], [0.0, shock_t],
+        color = :white, linewidth = 2, linestyle = :dash)
+    text!(ax3, "  n̂_shock", position = (shock_s, shock_t),
+        fontsize = 11, color = :white, font = :bold, align = (:left, :center))
+end
+
+# MFA轴标注
+text!(ax3, "û = $(round.(u_vec, digits=2))", position = (-900, -900),
+    fontsize = 10, color = :gray)
+text!(ax3, "v̂ = $(round.(v_vec, digits=2))", position = (-900, -950),
+    fontsize = 10, color = :gray)
+
+Colorbar(fig2[2, 2], hm3, label = "Differential Energy Flux")
+
+save(joinpath(VDF_path, fig2_name), fig2)
+println("Saved: ", joinpath(VDF_path, fig2_name))
 
 display(fig)
 while isopen(fig.scene)

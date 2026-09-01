@@ -40,10 +40,10 @@ sp = [rich(rich("H"), superscript("+")), rich(rich("He"), superscript("++")),
     rich(rich("O"), subscript("2"), superscript("+")), rich(rich("CO"), 
     subscript("2"), superscript("+")), rich("m/q=69.26344")]
 
-h_list = 0:3:24
-# h_list = [7]
-img_list = [1, 2, 5, 6, 7]
-# img_list = [1]
+# h_list = 0:3:24
+h_list = [7]
+# img_list = [1, 2, 5, 6, 7]
+img_list = [1]
 wave_time = DateTime(2022, 8, 24, 07, 30, 18)
 
 for img in img_list
