@@ -25,6 +25,8 @@ using Rotations
 using CoordinateTransformations
 using CairoMakie
 using LaTeXStrings
+using DelaunayTriangulation
+DelaunayTriangulation.toggle_warn_on_dupes!()
 import PhysicalConstants.CODATA2018: m_p, c_0
 
 include("../../src/scripts/MAVEN_load.jl")
@@ -40,15 +42,24 @@ using .SphericalSplines
 
 # --- 时间范围 ---
 date = Date(2022, 8, 24)
-ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(25)
-te = ts + Dates.Minute(1)
+ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(26)
+te = ts + Dates.Minute(3)
+# --- 指定绘图时间点 (HH:MM:SS 格式), 留空则绘制全部帧 ---
+plot_times = [
+    "07:26:00",
+    "07:26:30",
+    "07:27:00",
+    "07:27:30",
+    "07:28:00",
+    "07:28:30",
+]
 
 # --- 太阳风速度估算参数 (eflux/E² 峰值搜寻 bin) ---
 sw_i = 2
 sw_j = 14
 
 # --- 过滤参数 ---
-flux_threshold = 10^7.5   # eflux 阈值 (eV/cm²/s/sr/eV)
+flux_threshold = 10^5   # eflux 阈值 (eV/cm²/s/sr/eV)
 plot_range = (-1000, 1000)  # 绘图速度范围 (km/s)
 
 # --- 能量排除范围 (eV): 设置为 nothing 则不排除 ---
@@ -57,6 +68,7 @@ energy_exclude_max = nothing # 排除能量上限 (eV), nothing 表示不限
 
 # --- 热力图参数 ---
 heatmap_nbin = 100  # 热力图网格分辨率
+
 
 # ============================================================
 # 路径构造与数据加载
@@ -128,267 +140,243 @@ MVN_staticvswrough = CartesianFromSpherical()(
         MVN_staticvelocity[1, (sw_j - 1) * 4 + sw_i, ind, MVN_staticswpind, 1],
         deg2rad(MVN_staticphi[1, (sw_j - 1) * 4 + sw_i, ind, MVN_staticswpind, 1]),
         deg2rad(MVN_statictheta[1, (sw_j - 1) * 4 + sw_i, ind, MVN_staticswpind, 1])))
-println("太阳风速度 (STATIC系): ", round.(MVN_staticvswrough, digits = 1), " km/s, |Vsw| = ", round(norm(MVN_staticvswrough), digits = 1), " km/s")
+# println("太阳风速度 (STATIC系): ", round.(MVN_staticvswrough, digits = 1), " km/s, |Vsw| = ", round(norm(MVN_staticvswrough), digits = 1), " km/s")
 
 # ============================================================
-# 构建坐标系: x̂=B̂, ŷ=V̂sw, ẑ=B̂×V̂sw (STATIC 系)
+# 构建 MVA 坐标系: x̂=B̂, ŷ=B̂×V̂sw, ẑ=B̂×(B̂×V̂sw) (STATIC 系)
 # ============================================================
-e_x = MVN_parastatic
-e_y = MVN_staticvswrough ./ norm(MVN_staticvswrough)
-e_z = cross(e_x, e_y)
+e_x = MVN_parastatic                                                    # B̂
+e_y = cross(e_x, MVN_staticvswrough ./ norm(MVN_staticvswrough))       # B̂ × V̂sw
+e_y = e_y ./ norm(e_y)
+e_z = cross(e_x, e_y)                                                   # B̂ × (B̂ × V̂sw)
 e_z = e_z ./ norm(e_z)
-
-println("\n基矢量 (STATIC系):")
-println("  x̂ = B̂      = ($(round.(e_x, digits = 4)))")
-println("  ŷ = V̂sw    = ($(round.(e_y, digits = 4)))")
-println("  ẑ = B̂×V̂sw  = ($(round.(e_z, digits = 4)))")
-println("  x̂·ŷ = $(round(dot(e_x, e_y), digits = 3)) (非正交)")
 
 # 基矢量转换到 MSO 坐标系 (用于热力图坐标转换)
 e_x_mso = MVN_static2msomean * e_x  # B̂ in MSO
-e_y_mso = MVN_static2msomean * e_y  # V̂sw in MSO
-e_z_mso = MVN_static2msomean * e_z  # B̂×V̂sw in MSO
+e_y_mso = MVN_static2msomean * e_y  # B̂×V̂sw in MSO
+e_z_mso = MVN_static2msomean * e_z  # B̂×(B̂×V̂sw) in MSO
+
+# ============================================================
+# 弓激波法向计算 (Edberg et al., 2008 模型)
+# ============================================================
+const Rm = 3390.0  # 火星半径 (km)
+const BS_XF = 0.55; const BS_EPSILON = 1.05; const BS_L = 2.10
+
+function bowshock_r(x)
+    temp = (BS_EPSILON^2 - 1.0) * (x - BS_XF)^2 -
+           2 * BS_EPSILON * BS_L * (x - BS_XF) + BS_L^2
+    return temp >= 0 ? sqrt(temp) : Inf64
+end
+
+function bowshock_dr_dx(x)
+    r_bs = bowshock_r(x)
+    (!isfinite(r_bs) || r_bs < 1e-10) && return Inf64
+    numerator = (BS_EPSILON^2 - 1.0) * (x - BS_XF) - BS_EPSILON * BS_L
+    return numerator / r_bs
+end
+
+function bowshock_normal(x, y, z)
+    r_perp = sqrt(y^2 + z^2)
+    r_bs = bowshock_r(x)
+    (!isfinite(r_bs)) && return [0.0, 0.0, 0.0]
+    drdx = bowshock_dr_dx(x)
+    (!isfinite(drdx)) && return [0.0, 0.0, 0.0]
+    if r_perp < 1e-10
+        nx = drdx > 0 ? 1.0 : -1.0
+        return [nx, 0.0, 0.0]
+    end
+    nx = -drdx; ny = y / r_perp; nz = z / r_perp
+    n = [nx, ny, nz] / norm([nx, ny, nz])
+    n[1] > 0 && (n = -n)
+    return n
+end
+
+# 计算时间窗口中心时刻的位置和激波法向
+MVN_position = MVN_mag2c1hz[:position]
+mid_idx = ind[div(length(ind), 2) + 1]
+pos_mean_mso = Float64.(MVN_position[mid_idx, :])
+pos_mean_Rm = pos_mean_mso ./ Rm
+
+shock_normal_mso = bowshock_normal(pos_mean_Rm[1], pos_mean_Rm[2], pos_mean_Rm[3])
+shock_surface_mso = cross(shock_normal_mso, [0.0, 0.0, 1.0])  # 激波面切线 (近似)
+if norm(shock_surface_mso) < 1e-10
+    shock_surface_mso = cross(shock_normal_mso, [0.0, 1.0, 0.0])
+end
+shock_surface_mso = shock_surface_mso / norm(shock_surface_mso)
+
+# 转换到 (B̂, V̂sw, B̂×V̂sw) 坐标系
+# 由于基矢量不正交, 使用 MSO→(B̂, V̂sw, B̂×V̂sw) 的转换矩阵
+# [e_x_mso, e_y_mso, e_z_mso] 构成变换矩阵
+Basis_mso = hcat(e_x_mso, e_y_mso, e_z_mso)
+shock_normal_bvsw = Basis_mso' * shock_normal_mso
+shock_surface_bvsw = Basis_mso' * shock_surface_mso
+
+# 在 xz 和 yz 平面的投影 (仅保留平面内的分量)
+shock_xz_dir = [shock_surface_bvsw[1], shock_surface_bvsw[3]]  # (B̂, B̂×V̂sw) 平面
+shock_yz_dir = [shock_surface_bvsw[2], shock_surface_bvsw[3]]  # (V̂sw, B̂×V̂sw) 平面
+if norm(shock_xz_dir) > 1e-10
+    shock_xz_dir = shock_xz_dir / norm(shock_xz_dir)
+end
+if norm(shock_yz_dir) > 1e-10
+    shock_yz_dir = shock_yz_dir / norm(shock_yz_dir)
+end
 
 # ============================================================
 # 逐帧遍历: 每个时刻 × 每个 bin → 速度矢量 + eflux
 # ============================================================
 n_frames = length(MVN_staticind)
-n_total = n_frames * 64 * 32
-V_all = Array{Float64}(undef, n_total, 3)
-eflux_all = Array{Float64}(undef, n_total)
-energy_all = Array{Float64}(undef, n_total)  # 每个 bin 的离子能量 (eV)
+n_bins_per_frame = 64 * 32
 
-println("\n处理 $n_frames 帧 × $(64 * 32) bin = $n_total 点...")
+# 按帧存储数据
+V_frames = Vector{Matrix{Float64}}(undef, n_frames)
+eflux_frames = Vector{Vector{Float64}}(undef, n_frames)
+energy_frames = Vector{Vector{Float64}}(undef, n_frames)
+time_labels = Vector{String}(undef, n_frames)
+
 for (fi, t_idx) in enumerate(MVN_staticind)
     swp = MVN_staticswp[t_idx]
-    base_row = (fi - 1) * 64 * 32
+    V_frame = Array{Float64}(undef, n_bins_per_frame, 3)
+    eflux_frame = Array{Float64}(undef, n_bins_per_frame)
+    energy_frame = Array{Float64}(undef, n_bins_per_frame)
     for (bin_idx, (ij, k)) in enumerate(Iterators.product(1:64, 1:32))
-        row = base_row + bin_idx
         dir = CartesianFromSpherical()(
             CoordinateTransformations.Spherical(1.0,
                 deg2rad(MVN_staticphi[1, ij, k, swp, 1]),
                 deg2rad(MVN_statictheta[1, ij, k, swp, 1])))
-        V_all[row, :] = MVN_staticvelocity[1, ij, k, swp, 1] .* Array(dir)
-        eflux_all[row] = MVN_staticeflux[t_idx, 1, ij, k]
-        energy_all[row] = MVN_staticenergy[1, ij, k, swp, 1]
+        V_frame[bin_idx, :] = MVN_staticvelocity[1, ij, k, swp, 1] .* Array(dir)
+        eflux_frame[bin_idx] = MVN_staticeflux[t_idx, 1, ij, k]
+        energy_frame[bin_idx] = MVN_staticenergy[1, ij, k, swp, 1]
     end
-    fi % 10 == 0 && println("  帧 $fi / $n_frames")
+    V_frames[fi] = V_frame
+    eflux_frames[fi] = eflux_frame
+    energy_frames[fi] = energy_frame
+    time_labels[fi] = Dates.format(MVN_statictime[t_idx], "HH:MM:SS")
 end
 
 # ============================================================
-# 投影到新基: (v·x̂, v·ŷ, v·ẑ)
+# 选择指定时间点最近的帧
 # ============================================================
-proj = V_all * hcat(e_x, e_y, e_z) # (n_total, 3)
-
-# 能量排除掩码: true 表示保留
-energy_keep = trues(n_total)
-if energy_exclude_min !== nothing && energy_exclude_max !== nothing
-    energy_keep .&= .!(energy_exclude_min .<= energy_all .<= energy_exclude_max)
-    println("排除能量范围: $energy_exclude_min ~ $energy_exclude_max eV, 排除点数: $(count(.!energy_keep))")
-elseif energy_exclude_min !== nothing
-    energy_keep .&= .!(energy_all .>= energy_exclude_min)
-    println("排除能量 >= $energy_exclude_min eV, 排除点数: $(count(.!energy_keep))")
-elseif energy_exclude_max !== nothing
-    energy_keep .&= .!(energy_all .<= energy_exclude_max)
-    println("排除能量 <= $energy_exclude_max eV, 排除点数: $(count(.!energy_keep))")
+if isempty(plot_times)
+    selected_fi = collect(1:n_frames)
+else
+    selected_fi = Int[]
+    t_start = MVN_statictime[MVN_staticind[1]]
+    t_end = MVN_statictime[MVN_staticind[end]]
+    for pt in plot_times
+        parts = split(pt, ":")
+        pt_dt = DateTime(date) + Dates.Hour(parse(Int, parts[1])) +
+                Dates.Minute(parse(Int, parts[2])) + Dates.Second(parse(Int, parts[3]))
+        diffs = abs.(MVN_statictime[MVN_staticind] .- pt_dt)
+        _, closest = findmin(diffs)
+        if pt_dt < t_start || pt_dt > t_end
+            @warn "时刻 $pt 超出数据范围 ($(Dates.format(t_start,"HH:MM:SS")) ~ $(Dates.format(t_end,"HH:MM:SS"))), 使用最近帧 $(time_labels[closest])"
+        end
+        push!(selected_fi, closest)
+    end
+    selected_fi = unique(sort(selected_fi))
 end
-
-keep = (eflux_all .> flux_threshold) .&
-       energy_keep .&
-       (proj[:, 1] .> plot_range[1]) .& (proj[:, 1] .< plot_range[2]) .&
-       (proj[:, 3] .> plot_range[1]) .& (proj[:, 3] .< plot_range[2])
-println("有效点: $(count(keep)) / $n_total")
+n_selected = length(selected_fi)
+println("n_frames=$n_frames, selected_fi=$selected_fi, n_selected=$n_selected")
+println("Time range: ", MVN_statictime[MVN_staticind[1]], " ~ ", MVN_statictime[MVN_staticind[end]])
 
 # ============================================================
-# 绘图 (CairoMakie 散点)
+# 投影到 MVA 坐标系: (v·B̂, v·(B̂×V̂sw), v·(B̂×(B̂×V̂sw)))
+# ============================================================
+Basis = hcat(e_x, e_y, e_z)
+proj_frames = [V_frames[fi] * Basis for fi in 1:n_frames]
+
+# ============================================================
+# 绘图 (CairoMakie 散点): 2行n列子图, 每列一个时间点
 # ============================================================
 CairoMakie.activate!()
 
-fig_name = "MAVEN_STATIC_H+_VDF_BVsw_xz_yz_frame_" *
+fig_name = "MAVEN_STATIC_H+_VDF_MVA_xz_yz_frame_" *
     Dates.format(ts, "yyyymmddTHHMM") * "-" *
     Dates.format(te, "HHMM") * ".pdf"
 
 crange = (flux_threshold, 1e9)
+ticks = [-1000, -500, 0, 500, 1000]
 
-fig = Figure(resolution = (1200, 550), fontsize = 15)
+fig = Figure(resolution = (400 * n_selected, 800), fontsize = 12)
 
-# ---- xz 平面: v·B̂ vs v·B̂×V̂sw ----
-ax1 = Axis(fig[1, 1],
-    xlabel = L"$v \cdot \hat{B}$ (km/s)",
-    ylabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)",
-    title = "xz plane (B̂ vs B̂×V̂sw)",
-    xticks = [-1000, -500, 0, 500, 1000], yticks = [-1000, -500, 0, 500, 1000])
-xlims!(ax1, -1100, 1100)
-ylims!(ax1, -1100, 1100)
-hlines!(ax1, 0, color = :white, linestyle = :dash)
-vlines!(ax1, 0, color = :white, linestyle = :dash)
-scatter!(ax1, proj[keep, 1], proj[keep, 3];
-    color = eflux_all[keep], colormap = :gist_earth, colorscale = log10,
-    colorrange = crange, markersize = 8)
+for (col, fi) in enumerate(selected_fi)
+    proj_fi = proj_frames[fi]
+    eflux_fi = eflux_frames[fi]
+    energy_fi = energy_frames[fi]
 
-# ---- yz 平面: v·V̂sw vs v·B̂×V̂sw ----
-ax2 = Axis(fig[1, 2],
-    xlabel = L"$v \cdot \hat{V}_{\mathrm{sw}}$ (km/s)",
-    ylabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)",
-    title = "yz plane (V̂sw vs B̂×V̂sw)",
-    xticks = [-1000, -500, 0, 500, 1000], yticks = [-1000, -500, 0, 500, 1000])
-xlims!(ax2, -1100, 1100)
-ylims!(ax2, -1100, 1100)
-hlines!(ax2, 0, color = :white, linestyle = :dash)
-vlines!(ax2, 0, color = :white, linestyle = :dash)
-scatter!(ax2, proj[keep, 2], proj[keep, 3];
-    color = eflux_all[keep], colormap = :gist_earth, colorscale = log10,
-    colorrange = crange, markersize = 8)
+    # 逐帧过滤
+    e_keep = (energy_exclude_min === nothing || energy_exclude_max === nothing) ? trues(n_bins_per_frame) :
+        .!(energy_exclude_min .<= energy_fi .<= energy_exclude_max)
+    f_keep = (eflux_fi .> flux_threshold) .& e_keep .&
+        (proj_fi[:, 1] .> plot_range[1]) .& (proj_fi[:, 1] .< plot_range[2]) .&
+        (proj_fi[:, 3] .> plot_range[1]) .& (proj_fi[:, 3] .< plot_range[2])
 
-Colorbar(fig[1, 3], limits = crange, colormap = :gist_earth, scale = log10,
+    # ---- xz 平面 (第1行) ----
+    ax_xz = Axis(fig[1, col],
+        xlabel = col == 1 ? L"$\hat{B}$ (km/s)" : "",
+        ylabel = L"$\hat{B} \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)",
+        title = time_labels[fi],
+        xticks = ticks, yticks = ticks)
+    xlims!(ax_xz, plot_range[1], plot_range[2])
+    ylims!(ax_xz, plot_range[1], plot_range[2])
+    hlines!(ax_xz, 0, color = :white, linestyle = :dash)
+    vlines!(ax_xz, 0, color = :white, linestyle = :dash)
+    if count(f_keep) > 0
+        scatter!(ax_xz, proj_fi[f_keep, 1], proj_fi[f_keep, 3];
+            color = eflux_fi[f_keep], colormap = :gist_earth, colorscale = log10,
+            colorrange = crange, markersize = 4)
+    end
+    if col == 1 && norm(shock_xz_dir) > 1e-10
+        L = Float64(plot_range[2]) * 0.9
+        lines!(ax_xz, [-L*shock_xz_dir[1], L*shock_xz_dir[1]],
+                    [-L*shock_xz_dir[2], L*shock_xz_dir[2]],
+                    color=:black, linestyle=:dash, linewidth=2)
+    end
+
+    # ---- yz 平面 (第2行) ----
+    f_keep_yz = (eflux_fi .> flux_threshold) .& e_keep .&
+        (proj_fi[:, 2] .> plot_range[1]) .& (proj_fi[:, 2] .< plot_range[2]) .&
+        (proj_fi[:, 3] .> plot_range[1]) .& (proj_fi[:, 3] .< plot_range[2])
+
+    ax_yz = Axis(fig[2, col],
+        xlabel = L"$\hat{B} \cdot \hat{V}_{\mathrm{sw}}$ (km/s)",
+        ylabel = col == 1 ? L"$\hat{B} \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)" : "",
+        xticks = ticks, yticks = ticks)
+    xlims!(ax_yz, plot_range[1], plot_range[2])
+    ylims!(ax_yz, plot_range[1], plot_range[2])
+    hlines!(ax_yz, 0, color = :white, linestyle = :dash)
+    vlines!(ax_yz, 0, color = :white, linestyle = :dash)
+    if count(f_keep_yz) > 0
+        scatter!(ax_yz, proj_fi[f_keep_yz, 2], proj_fi[f_keep_yz, 3];
+            color = eflux_fi[f_keep_yz], colormap = :gist_earth, colorscale = log10,
+            colorrange = crange, markersize = 4)
+    end
+    if col == 1 && norm(shock_yz_dir) > 1e-10
+        L = Float64(plot_range[2]) * 0.9
+        lines!(ax_yz, [-L*shock_yz_dir[1], L*shock_yz_dir[1]],
+                    [-L*shock_yz_dir[2], L*shock_yz_dir[2]],
+                    color=:black, linestyle=:dash, linewidth=2)
+    end
+end
+
+Colorbar(fig[1:2, n_selected+1], limits = crange, colormap = :gist_earth, scale = log10,
     label = L"H$^{+}$ Differential Energy Flux (eV/cm²/s/sr/eV)")
 
 save(joinpath(VDF_path, fig_name), fig)
 println("Saved figure: ", joinpath(VDF_path, fig_name))
 
 # ============================================================
-# 热力图: 球面样条插值 (参考 sta_VDF_eflux_interp.jl)
+# 热力图: 球面样条插值 — 逐帧版
+# 每个选中的时间点单独构建球面样条 → 单独插值 → 一格一个时间点
+# (与散点图一致: 2 行 × n_selected 列, 每列一个时间点)
 # ============================================================
-
-# 热力图数据: 仅过滤能量排除 + 速度范围, 不过滤 eflux
-keep_heat = energy_keep .&
-    (proj[:, 1] .> plot_range[1]) .& (proj[:, 1] .< plot_range[2]) .&
-    (proj[:, 3] .> plot_range[1]) .& (proj[:, 3] .< plot_range[2])
-println("\n热力图有效点: $(count(keep_heat)) / $n_total")
-
-# ============================================================
-# 步骤1: 时间平均 (参考 sta_VDF_eflux_interp.jl)
-# 逐帧构建球面样条 → 插值到公共方向 → 累加平均
-# ============================================================
-println("沿时间平均数据...")
 
 n_energy_ch = size(MVN_staticeflux, 4)  # 32 能道
 n_dir = size(MVN_staticeflux, 3)        # 64 方向
 
-# 使用窗口首帧的 swp 和方向作为公共方向
-swp_ref = MVN_staticswp[MVN_staticind[1]]
-theta_ref = MVN_statictheta[1, :, :, swp_ref, 1]  # 64×32
-phi_ref = MVN_staticphi[1, :, :, swp_ref, 1]      # 64×32
-energy_ref = MVN_staticenergy[1, :, :, swp_ref, 1] # 64×32
-velocity_ref = MVN_staticvelocity[1, :, :, swp_ref, 1] # 64×32
-
-# 公共方向: SC → (B̂, V̂sw, B̂×V̂sw)
-dirs_common = zeros(n_dir * n_energy_ch, 3)
-speeds_common = zeros(n_dir * n_energy_ch)
-global row_common = 0
-for (ij, k) in Iterators.product(1:n_dir, 1:n_energy_ch)
-    global row_common += 1
-    dir_sc = CartesianFromSpherical()(
-        CoordinateTransformations.Spherical(1.0,
-            deg2rad(phi_ref[ij, k]),
-            deg2rad(theta_ref[ij, k])))
-    v_sc = velocity_ref[ij, k] .* Array(dir_sc)
-    # SC → MSO → (B̂, V̂sw, B̂×V̂sw)
-    Q_first = QuatRotation(MVN_staticquat_mso[MVN_staticind[1], :])
-    v_mso = Q_first * v_sc
-    dirs_common[row_common, :] = v_mso ./ norm(v_mso)
-    speeds_common[row_common] = norm(v_sc)
-end
-
-# 逐能道: 公共方向 + 累加器
-common = Vector{Dict{Symbol,Any}}(undef, n_energy_ch)
-for k in 1:n_energy_ch
-    mask_k = ((k-1)*n_dir+1):(k*n_dir)
-    common[k] = Dict(
-        :dirs_MSO => dirs_common[mask_k, :],
-        :speeds => speeds_common[mask_k],
-        :n_total => n_dir,
-        :flux_sum => zeros(Float64, n_dir),
-        :cnt => zeros(Int, n_dir),
-    )
-end
-
-# 逐帧: 构建球面样条 → 插值到公共方向 → 累加
-global n_frames_ok = 0
-for t_idx in MVN_staticind
-    swp = MVN_staticswp[t_idx]
-    Q_f = QuatRotation(MVN_staticquat_mso[t_idx, :])
-
-    for k in 1:n_energy_ch
-        theta_k = MVN_statictheta[1, :, k, swp, 1]
-        phi_k = MVN_staticphi[1, :, k, swp, 1]
-        flux_k = MVN_staticeflux[t_idx, 1, :, k]
-
-        # 筛选有效数据
-        valid = .!isnan.(theta_k) .& .!isnan.(phi_k) .& .!isnan.(flux_k) .& (flux_k .> 0)
-        nv = count(valid)
-        nv ≥ 4 || continue
-
-        ct = cosd.(theta_k[valid])
-        st = sind.(theta_k[valid])
-        cp = cosd.(phi_k[valid])
-        sp = sind.(phi_k[valid])
-        dirs_SC_this = hcat(ct.*cp, ct.*sp, st)
-
-        # 球面样条: SC 方向 → log10(eflux)
-        spline = InterpolationSpline(dirs_SC_this, log10.(flux_k[valid]))
-
-        # 对每个公共方向, 插值该帧的 eflux
-        c = common[k]
-        for i in 1:c[:n_total]
-            d_mso = c[:dirs_MSO][i, :]
-            d_sc = normalize(Q_f' * d_mso)  # MSO → SC (该帧姿态)
-            log_flux_val = spline(Vector(d_sc))
-            if !isnan(log_flux_val)
-                c[:flux_sum][i] += 10.0^log_flux_val  # 还原线性 eflux
-                c[:cnt][i] += 1
-            end
-        end
-    end
-
-    global n_frames_ok += 1
-end
-println("时间平均: $n_frames_ok 帧")
-
-# 步骤2: 平均 → 构建最终球面样条
-println("构建平均后的球面样条...")
-
-# 平均 eflux
-eflux_avg = zeros(n_dir, n_energy_ch)
-for k in 1:n_energy_ch
-    c = common[k]
-    for i in 1:c[:n_total]
-        if c[:cnt][i] > 0
-            eflux_avg[i, k] = c[:flux_sum][i] / c[:cnt][i]
-        end
-    end
-end
-
-# 速度通道 (公共方向的3D全速)
-v_ch = zeros(n_energy_ch)
-for k in 1:n_energy_ch
-    v_ch[k] = mean(common[k][:speeds])
-end
-
-# 按速度排序 (低→高), 与 sta_VDF_eflux_interp.jl 一致
-sort_idx = sortperm(v_ch)
-v_ch = v_ch[sort_idx]
-eflux_avg = eflux_avg[:, sort_idx]
-
-# 逐能道构建球面样条 (公共 MSO 方向 → log10(eflux_avg))
-splines = Vector{Any}(undef, n_energy_ch)
-for k in 1:n_energy_ch
-    splines[k] = nothing
-    flux_k = eflux_avg[:, k]
-    valid = .!isnan.(flux_k) .& (flux_k .> 0)
-    nv = count(valid)
-    nv ≥ 4 || continue
-
-    dirs_k = common[sort_idx[k]][:dirs_MSO][valid, :]
-    splines[k] = InterpolationSpline(dirs_k, log10.(flux_k[valid]))
-end
-n_spline_ok = count(s -> s !== nothing, splines)
-println("构建 $n_spline_ok / $n_energy_ch 个球面样条")
-
-# 在 (B̂, V̂sw, B̂×V̂sw) 坐标系下构建球面样条插值热力图
-# 参考 sta_VDF_eflux_interp.jl 的 build_vdf_grid 方法
+# 在 (B̂, V̂sw, B̂×V̂sw) 坐标系下构建球面样条插值热力图 (单帧版本)
 # plane: "xz" → (v·B̂, v·(B̂×V̂sw)), "yz" → (v·V̂sw, v·(B̂×V̂sw))
-# 使用时间平均后的 splines 和 v_ch
+# splines 已按 v_ch 升序排列, 与 build_vdf_grid_bvsw 用法一致
 function build_vdf_grid_bvsw(splines, v_ch; n_grid=80, plot_range=(-1000, 1000), plane="xz",
                               e_x_mso=nothing, e_y_mso=nothing, e_z_mso=nothing)
     n_energy = length(v_ch)
@@ -408,10 +396,10 @@ function build_vdf_grid_bvsw(splines, v_ch; n_grid=80, plot_range=(-1000, 1000),
         dir_mso = zeros(3)
         if plane == "xz"
             dir_mso[1] = v1   # v·B̂
-            dir_mso[3] = v2   # v·(B̂×V̂sw)
+            dir_mso[3] = v2   # v·(B̂×(B̂×V̂sw))
         else  # "yz"
-            dir_mso[2] = v1   # v·V̂sw
-            dir_mso[3] = v2   # v·(B̂×V̂sw)
+            dir_mso[2] = v1   # v·(B̂×V̂sw)
+            dir_mso[3] = v2   # v·(B̂×(B̂×V̂sw))
         end
 
         speed_pt = norm(dir_mso)
@@ -454,19 +442,67 @@ function build_vdf_grid_bvsw(splines, v_ch; n_grid=80, plot_range=(-1000, 1000),
     return v_centers, grid_log
 end
 
-println("球面样条插值生成热力图...")
-xz_centers, xz_grid = build_vdf_grid_bvsw(splines, v_ch; n_grid=heatmap_nbin, plot_range=plot_range, plane="xz",
-    e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
-yz_centers, yz_grid = build_vdf_grid_bvsw(splines, v_ch; n_grid=heatmap_nbin, plot_range=plot_range, plane="yz",
-    e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
+# 单帧: 构建球面样条 (该帧各能道的方向旋转到 MSO 后 → log10(eflux)),
+# 返回按 v_ch 升序排列的 splines 与 v_ch
+function build_frame_splines(t_idx)
+    swp = MVN_staticswp[t_idx]
+    Q_f = QuatRotation(MVN_staticquat_mso[t_idx, :])
 
-fig_heat_name = "MAVEN_STATIC_H+_VDF_BVsw_xz_yz_heatmap_" *
-    Dates.format(ts, "yyyymmddTHHMM") * "-" *
-    Dates.format(te, "HHMM") * ".pdf"
+    # 该帧各能道平均速度
+    v_ch_f = zeros(n_energy_ch)
+    for k in 1:n_energy_ch
+        speed_k = MVN_staticvelocity[1, :, k, swp, 1]
+        svalid = .!isnan.(speed_k)
+        v_ch_f[k] = svalid == 0 ? 0.0 : mean(speed_k[svalid])
+    end
 
-# 颜色范围: 从有效数据的 5%~95% 分位数计算
-all_valid = filter(isfinite, vec(xz_grid))
-append!(all_valid, filter(isfinite, vec(yz_grid)))
+    # 逐能道构建球面样条 (方向在 MSO 系)
+    splines_f = Vector{Any}(undef, n_energy_ch)
+    for k in 1:n_energy_ch
+        splines_f[k] = nothing
+        theta_k = MVN_statictheta[1, :, k, swp, 1]
+        phi_k = MVN_staticphi[1, :, k, swp, 1]
+        flux_k = MVN_staticeflux[t_idx, 1, :, k]
+
+        valid = .!isnan.(theta_k) .& .!isnan.(phi_k) .& .!isnan.(flux_k) .& (flux_k .> 0)
+        nv = count(valid)
+        nv ≥ 4 || continue
+
+        ct = cosd.(theta_k[valid]); st = sind.(theta_k[valid])
+        cp = cosd.(phi_k[valid]);   sp = sind.(phi_k[valid])
+        dirs_SC = hcat(ct.*cp, ct.*sp, st)
+
+        # SC → MSO
+        dirs_MSO = (Q_f * dirs_SC')'          # 每行一个 MSO 方向
+        dirs_MSO ./= vec(sqrt.(sum(abs2, dirs_MSO, dims=2)))
+
+        splines_f[k] = InterpolationSpline(dirs_MSO, log10.(flux_k[valid]))
+    end
+
+    # 按速度排序 (低→高), 与 build_vdf_grid_bvsw 的 i_low/i_high 用法一致
+    sort_idx = sortperm(v_ch_f)
+    v_ch_f = v_ch_f[sort_idx]
+    splines_f = splines_f[sort_idx]
+    return splines_f, v_ch_f
+end
+
+println("逐帧球面样条插值生成热力图...")
+
+# 先对每个选中帧计算网格, 并收集全局颜色范围 (便于帧间对比)
+all_valid = Float64[]
+frame_grids = Vector{Tuple{Vector{Float64},Matrix{Float64},Vector{Float64},Matrix{Float64}}}(undef, n_selected)
+for (col, fi) in enumerate(selected_fi)
+    t_idx = MVN_staticind[fi]
+    splines_f, v_ch_f = build_frame_splines(t_idx)
+    xzc, xzg = build_vdf_grid_bvsw(splines_f, v_ch_f; n_grid=heatmap_nbin,
+        plot_range=plot_range, plane="xz", e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
+    yzc, yzg = build_vdf_grid_bvsw(splines_f, v_ch_f; n_grid=heatmap_nbin,
+        plot_range=plot_range, plane="yz", e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
+    frame_grids[col] = (xzc, xzg, yzc, yzg)
+    append!(all_valid, filter(isfinite, vec(xzg)))
+    append!(all_valid, filter(isfinite, vec(yzg)))
+end
+
 if length(all_valid) > 10
     lo, hi = quantile(all_valid, [0.05, 0.95])
     cr_log = (lo, hi)
@@ -475,36 +511,189 @@ else
 end
 
 ticks = [-1000, -500, 0, 500, 1000]
-title_heat = "MAVEN STATIC H⁺ VDF $(datestr) $(Dates.format(ts,"HH:MM:SS"))-$(Dates.format(te,"HH:MM:SS")) (B̂, V̂sw)"
+title_heat = "MAVEN STATIC H⁺ VDF $(datestr) $(Dates.format(ts,"HH:MM:SS"))-$(Dates.format(te,"HH:MM:SS")) (MVA) per-frame spline"
 colorbar_label = L"$\log_{10}$ Differential Energy Flux (eV/cm$^2$/s/sr/eV)"
 
-fig2 = Figure(resolution = (1200, 550), fontsize = 15)
+fig_heat_name = "MAVEN_STATIC_H+_VDF_MVA_xz_yz_heatmap_frame_" *
+    Dates.format(ts, "yyyymmddTHHMM") * "-" *
+    Dates.format(te, "HHMM") * ".pdf"
 
-ax_xz = Axis(fig2[1, 1], aspect = 1, yticks = ticks, xticks = ticks,
-    limits = (plot_range, plot_range), alignmode = Inside())
-ax_yz = Axis(fig2[1, 2], aspect = 1, yticks = ticks, xticks = ticks,
-    limits = (plot_range, plot_range), alignmode = Inside())
-linkxaxes!(ax_xz, ax_yz)
+fig2 = Figure(resolution = (600 * n_selected + 80, 1100), fontsize = 12)
 
-# ---- xz 平面热力图 ----
-heatmap!(ax_xz, xz_centers, xz_centers, xz_grid; colormap = :viridis,
-    colorrange = cr_log, nan_color = :transparent)
-hlines!(ax_xz, 0, linestyle = :dash, color = :white)
-vlines!(ax_xz, 0, linestyle = :dash, color = :white)
-ax_xz.xlabel = L"$v \cdot \hat{B}$ (km/s)"
-ax_xz.ylabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)"
+for (col, fi) in enumerate(selected_fi)
+    xzc, xzg, yzc, yzg = frame_grids[col]
 
-# ---- yz 平面热力图 ----
-heatmap!(ax_yz, yz_centers, yz_centers, yz_grid; colormap = :viridis,
-    colorrange = cr_log, nan_color = :transparent)
-hlines!(ax_yz, 0, linestyle = :dash, color = :white)
-vlines!(ax_yz, 0, linestyle = :dash, color = :white)
-ax_yz.xlabel = L"$v \cdot \hat{V}_{\mathrm{sw}}$ (km/s)"
-ax_yz.ylabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)"
+    # ---- xz 平面热力图 (第1行: 该时间点) ----
+    ax_xz = Axis(fig2[1, col], aspect = 1, yticks = ticks, xticks = ticks,
+        limits = (plot_range, plot_range), alignmode = Inside(),
+        title = time_labels[fi])
+    heatmap!(ax_xz, xzc, xzc, xzg; colormap = :viridis,
+        colorrange = cr_log, nan_color = :transparent)
+    hlines!(ax_xz, 0, linestyle = :dash, color = :white)
+    vlines!(ax_xz, 0, linestyle = :dash, color = :white)
+    ax_xz.xlabel = col == 1 ? L"$v \cdot \hat{B}$ (km/s)" : ""
+    ax_xz.ylabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)"
 
-Colorbar(fig2[1, 3], limits = cr_log, colormap = :viridis,
+    # 激波面方向 (黑色虚线)
+    if norm(shock_xz_dir) > 1e-10
+        Lz = Float64(plot_range[2]) * 0.9
+        lines!(ax_xz, [-Lz*shock_xz_dir[1], Lz*shock_xz_dir[1]],
+                    [-Lz*shock_xz_dir[2], Lz*shock_xz_dir[2]],
+                    color=:black, linestyle=:dash, linewidth=2)
+    end
+
+    # ---- yz 平面热力图 (第2行: 该时间点) ----
+    ax_yz = Axis(fig2[2, col], aspect = 1, yticks = ticks, xticks = ticks,
+        limits = (plot_range, plot_range), alignmode = Inside())
+    heatmap!(ax_yz, yzc, yzc, yzg; colormap = :viridis,
+        colorrange = cr_log, nan_color = :transparent)
+    hlines!(ax_yz, 0, linestyle = :dash, color = :white)
+    vlines!(ax_yz, 0, linestyle = :dash, color = :white)
+    ax_yz.xlabel = L"$v \cdot \hat{V}_{\mathrm{sw}}$ (km/s)"
+    ax_yz.ylabel = col == 1 ? L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)" : ""
+
+    # 激波面方向 (黑色虚线)
+    if norm(shock_yz_dir) > 1e-10
+        Lz = Float64(plot_range[2]) * 0.9
+        lines!(ax_yz, [-Lz*shock_yz_dir[1], Lz*shock_yz_dir[1]],
+                    [-Lz*shock_yz_dir[2], Lz*shock_yz_dir[2]],
+                    color=:black, linestyle=:dash, linewidth=2)
+    end
+end
+
+Colorbar(fig2[1:2, n_selected+1], limits = cr_log, colormap = :viridis,
     label = colorbar_label)
 Label(fig2[0, :], title_heat, fontsize = 18, tellwidth = false)
 
 save(joinpath(VDF_path, fig_heat_name), fig2)
 println("Saved heatmap: ", joinpath(VDF_path, fig_heat_name))
+
+# ============================================================
+# Voronoi 图: (B̂, V̂sw, B̂×V̂sw) 坐标系
+# 参考 sta_VDF.jl 的 VDF_2d_slip 绘图逻辑
+# ============================================================
+println("\n生成 Voronoi 图...")
+
+# Voronoi 图参数
+voronoi_colorrange = (10^3, 10^9)  # eflux 颜色范围
+
+# Gram-Schmidt 正交化: 从 e_x(B̂) 和 e_y(V̂sw) 构建正交基
+# 参考 sta_VDF.jl 的 slice2d_cal_rot 函数
+function build_orthonormal_basis(v1, v2)
+    a = normalize(v1)
+    c = cross(a, normalize(v2))
+    c = normalize(c)
+    b = cross(c, a)
+    b = normalize(b)
+    return a, b, c  # 正交基: (B̂_orth, perp, B̂×V̂sw)
+end
+
+# xz 平面基: x̂=B̂, ẑ=B̂×(B̂×V̂sw)
+basis_xz_a, basis_xz_b, basis_xz_c = build_orthonormal_basis(e_x, e_z)
+rot_xz = hcat(basis_xz_a, basis_xz_b, basis_xz_c)'
+
+# yz 平面基: ŷ=B̂×V̂sw, ẑ=B̂×(B̂×V̂sw)
+basis_yz_a, basis_yz_b, basis_yz_c = build_orthonormal_basis(e_y, e_z)
+rot_yz = hcat(basis_yz_a, basis_yz_b, basis_yz_c)'
+
+# 合并所有帧数据用于 Voronoi
+V_all = reduce(vcat, V_frames)
+eflux_all = reduce(vcat, eflux_frames)
+
+# 旋转到目标坐标系
+V_rot_xz = V_all * rot_xz'
+V_rot_yz = V_all * rot_yz'
+
+# 颜色映射 (eflux → 1-256 索引, 处理零/负值)
+function color_map_voronoi(c, cr)
+    c_safe = copy(c)
+    c_safe[c_safe .<= 0] .= 1e-20  # 零/负值设为极小正值
+    c_log = log10.(c_safe)
+    cr_log = log10.(cr)
+    colors = round.(Int, ((c_log .- cr_log[1]) ./ (cr_log[2] - cr_log[1])) .* 255 .+ 1)
+    colors[colors .> 256] .= 256
+    colors[colors .< 1] .= 1
+    return colors
+end
+
+# 创建 Voronoi 图
+fig_voronoi_name = "MAVEN_STATIC_H+_VDF_MVA_voronoi_" *
+    Dates.format(ts, "yyyymmddTHHMM") * "-" *
+    Dates.format(te, "HHMM") * ".pdf"
+
+fig3 = Figure(resolution = (1200, 550), fontsize = 15)
+
+# ---- xz 平面 Voronoi: B̂ vs B̂×V̂sw ----
+# 无过滤, 使用全部数据点
+vx_xz = V_rot_xz[:, 1]  # v 在 B̂_orth 方向的分量
+vz_xz = V_rot_xz[:, 3]  # v 在 B̂×V̂sw 方向的分量
+eflux_xz = eflux_all
+
+ax_vxz = Axis(fig3[1, 1],
+    xlabel = L"$v \cdot \hat{B}$ (km/s)",
+    ylabel = L"$v \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)",
+    title = "xz plane (B̂ vs B̂×(B̂×V̂sw))",
+    xticks = [-1000, -500, 0, 500, 1000], yticks = [-1000, -500, 0, 500, 1000])
+xlims!(ax_vxz, plot_range[1], plot_range[2])
+ylims!(ax_vxz, plot_range[1], plot_range[2])
+hlines!(ax_vxz, 0, color = :white, linestyle = :dash)
+vlines!(ax_vxz, 0, color = :white, linestyle = :dash)
+
+if length(vx_xz) > 3
+    pts_xz = [Point2f(vx_xz[i], vz_xz[i]) for i in eachindex(vx_xz)]
+    tri_xz = triangulate(pts_xz)
+    vor_xz = voronoi(tri_xz)
+    vor_colors_xz = color_map_voronoi(eflux_xz, voronoi_colorrange)
+    voronoiplot!(ax_vxz, vor_xz, color = vor_colors_xz, colormap = :viridis,
+        strokewidth = 0, markersize = 0)
+end
+
+# 画激波面方向 (黑色虚线)
+if norm(shock_xz_dir) > 1e-10
+    L = Float64(plot_range[2]) * 0.9
+    lines!(ax_vxz, [-L*shock_xz_dir[1], L*shock_xz_dir[1]],
+                [-L*shock_xz_dir[2], L*shock_xz_dir[2]],
+                color=:black, linestyle=:dash, linewidth=2)
+end
+
+# ---- yz 平面 Voronoi: V̂sw vs B̂×V̂sw ----
+# 无过滤, 使用全部数据点
+vy_yz = V_rot_yz[:, 1]  # v 在 V̂sw 方向的分量
+vz_yz = V_rot_yz[:, 3]  # v 在 B̂×V̂sw 方向的分量
+eflux_yz = eflux_all
+
+ax_vyz = Axis(fig3[1, 2],
+    xlabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)",
+    ylabel = L"$v \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)",
+    title = "yz plane (B̂×V̂sw vs B̂×(B̂×V̂sw))",
+    xticks = [-1000, -500, 0, 500, 1000], yticks = [-1000, -500, 0, 500, 1000])
+xlims!(ax_vyz, plot_range[1], plot_range[2])
+ylims!(ax_vyz, plot_range[1], plot_range[2])
+hlines!(ax_vyz, 0, color = :white, linestyle = :dash)
+vlines!(ax_vyz, 0, color = :white, linestyle = :dash)
+
+if length(vy_yz) > 3
+    pts_yz = [Point2f(vy_yz[i], vz_yz[i]) for i in eachindex(vy_yz)]
+    tri_yz = triangulate(pts_yz)
+    vor_yz = voronoi(tri_yz)
+    vor_colors_yz = color_map_voronoi(eflux_yz, voronoi_colorrange)
+    voronoiplot!(ax_vyz, vor_yz, color = vor_colors_yz, colormap = :viridis,
+        strokewidth = 0, markersize = 0)
+end
+
+# 画激波面方向 (黑色虚线)
+if norm(shock_yz_dir) > 1e-10
+    L = Float64(plot_range[2]) * 0.9
+    lines!(ax_vyz, [-L*shock_yz_dir[1], L*shock_yz_dir[1]],
+                [-L*shock_yz_dir[2], L*shock_yz_dir[2]],
+                color=:black, linestyle=:dash, linewidth=2)
+end
+
+Colorbar(fig3[1, 3], limits = voronoi_colorrange, colormap = :viridis, scale = log10,
+    label = L"H$^{+}$ Differential Energy Flux (eV/cm²/s/sr/eV)")
+
+Label(fig3[0, :], "MAVEN STATIC H⁺ VDF $(datestr) $(Dates.format(ts,"HH:MM:SS"))-$(Dates.format(te,"HH:MM:SS")) (MVA) Voronoi",
+    fontsize = 18, tellwidth = false)
+
+save(joinpath(VDF_path, fig_voronoi_name), fig3)
+println("Saved Voronoi: ", joinpath(VDF_path, fig_voronoi_name))
