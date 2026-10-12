@@ -116,9 +116,10 @@ end
 	Once the related coloumn number "n" is identified, one can access the data through data[:, n]. 
 """
 function read_mvn_kp(
-	date_str::String
+	date_str::String; 
+	data_root::String = "E:/Data/MAVEN"
 )
-	folder = "E:/MAVEN/KP/insitu/$(date_str[1:4])/$(date_str[5:6])/"
+	folder = "$data_root/KP/insitu/$(date_str[1:4])/$(date_str[5:6])/"
     file = glob("*$date_str*.tab", folder)
 
 	if isempty(file)
@@ -161,9 +162,10 @@ end
 """
 function read_mvn_swia_coarsesvy3d(
 	date_str::String,
-	kp::DataFrame
+	kp::DataFrame;
+	data_root::String = "E:/Data/MAVEN"
 )
-	folder = "E:/MAVEN/SWIA/l2/$(date_str[1:4])/$(date_str[5:6])/"
+	folder = "$data_root/SWIA/l2/$(date_str[1:4])/$(date_str[5:6])/"
 	file = glob("*coarsesvy3d_*$date_str*.cdf", folder)
 	
 	if isempty(file)
@@ -295,9 +297,10 @@ end
 """
 function read_mvn_static_32e4d16a8m(
 	date_str::String;
+	data_root::String = "E:/Data/MAVEN",
 	resolution::String = "d0"
 )
-	folder = "E:/MAVEN/STATIC/l2/$(date_str[1:4])/$(date_str[5:6])/"
+	folder = "$data_root/STATIC/l2/$(date_str[1:4])/$(date_str[5:6])/"
 	file = glob("*$resolution*32e4d16a8m_*$date_str*.cdf", folder)
 	
 	if isempty(file)
