@@ -1,0 +1,189 @@
+*** Begin Patch
+*** Update File: src/scripts/MVN3DIonDisttribution.jl
+@@ using DelimitedFiles
+ using DelimitedFiles
+-using DataFrames
+ # Stucturing Data
+ 
+@@
+-	The data included magetic field components and spacecraft positions are exported into a DataFrame.
++	The data included magetic field components and spacecraft positions are exported into a Dict{Symbol, Any}.
+ """
+ function read_mvn_mag(
+ 	date_str::String;
+ 	data_root::String = "E:/Data", 
+ 	coordinate::String = "ss", # or "pc"
+ 	resolution::String = "1s",  # or "" representing data with 64 Hz samping rate
+ 	Rm = ustrip(u"km", R_Mars)  # Mars' radius in units of km
+ )
+ 	folder = "$(data_root)/MAG/l2/$(date_str[1:4])/$(date_str[5:6])/"	
+ 	file = glob("*$coordinate$resolution*_*$date_str*.sts", folder)
+ 	
+ 	if isempty(file)
+ 		error("No matching file found: folder=$folder, pattern=*$coordinate$resolution*_*$date_str*.sts")
+ 	elseif length(file) > 1
+ 		@warn "Multiple files matched, using the first one" folder=folder matched=file
+ 	end
+ 
+ 	file = file[1]
+ 	lines = readlines(file)
+ 	skip = findfirst(line -> occursin(r"^\s*\d{4}\s+\d{3}", line), lines)
+-	data = identity.(DataFrame(readdlm(IOBuffer(join(lines[skip:end], "\n"))), :auto))
+-	name = [:year,  :doy,  :hour,  :min,  :sec,  :msec,  :dddy,  :bx,  :by,  :bz,  :brange,  :px,  :py,  :pz,  :plbx,  :plby,  :plbz,  :plrange]
+-	rename!(data, name)
+-	transform!(data,
+-	    [:year, :doy, :hour, :min, :sec, :msec] => ByRow(
+-	        (y, d, h, m, s, ms) ->
+-	            DateTime(y) + Day(d - 1) + Hour(h) +
+-	            Minute(m) + Second(s) + Millisecond(ms)
+-	    ) => :epoch)
+-	transform!(data,
+-	    :epoch => ByRow(time -> datetime2julian(time)) => :julian)
+-	transform!(data, [:px, :py, :pz] .=> (x -> x ./ Rm) .=> [:px, :py, :pz]) 
+-	transform!(data, [:px, :py, :pz] => ByRow((x, y, z) -> sqrt(x^2+y^2+z^2)) => :pr) 
+-	select!(data, :epoch, :julian, :bx, :by, :bz, :px, :py, :pz, :pr)
+-
+-	return data
++	raw = readdlm(IOBuffer(join(lines[skip:end], "\n")), :auto)
++	# 列序：year(1), doy(2), hour(3), min(4), sec(5), msec(6), dddy(7), bx(8), by(9), bz(10), brange(11), px(12), py(13), pz(14), ...
++	epoch = [
++		DateTime(Int(raw[i, 1])) + Day(Int(raw[i, 2]) - 1) + Hour(Int(raw[i, 3])) +
++		Minute(Int(raw[i, 4])) + Second(Int(raw[i, 5])) + Millisecond(Int(raw[i, 6]))
++		for i in 1:size(raw, 1)
++	]
++	julian = datetime2julian.(epoch)
++	bx = Float32.(raw[:, 8])
++	by = Float32.(raw[:, 9])
++	bz = Float32.(raw[:, 10])
++	B = hcat(bx, by, bz)               # N×3 磁场矩阵，等价于原来的 [df.bx df.by df.bz]
++	px = Float32.(raw[:, 12]) ./ Rm
++	py = Float32.(raw[:, 13]) ./ Rm
++	pz = Float32.(raw[:, 14]) ./ Rm
++	position = hcat(px, py, pz)        # N×3 位置矩阵 (RM)
++	pr = sqrt.(px .^ 2 .+ py .^ 2 .+ pz .^ 2)
++
++	return Dict{Symbol, Any}(
++		:epoch    => epoch,
++		:julian   => julian,
++		:bx       => bx,
++		:by       => by,
++		:bz       => bz,
++		:B        => B,
++		:px       => px,
++		:py       => py,
++		:pz       => pz,
++		:position => position,
++		:pr       => pr,
++		:data_load_flag => true,
++	)
+ end
+
+@@
+-	The parameters and data are exported as two DataFrames. Through searching the "param" DataFrame, 
+-	one can identify which colomun of "data" DataFrame contains the required data. For Example:
+-		filter(row -> row.instrument == "MAG", param)
+-		filter(row -> row.unit == "cm^-3", param)
+-		filter(row -> occursin(r"density"i, row.parameter), param)
+-		filter(row -> occursin(r"periapsis"i, row.note), param)
+-		subset(param, 
+-			:instrument => ByRow(==("STATIC")),
+-			:parameter  => ByRow(p -> occursin(r"temperature"i, p))
+-		)
+-	Once the related coloumn number "n" is identified, one can access the data through data[:, n]. 
++	The parameters and data are exported as a Vector{NamedTuple} and a Dict{Symbol, Any} respectively.
++	Through searching the "param" vector, one can identify which colomun of the numeric matrix
++	"data[:fields]" contains the required data. For Example:
++		filter(p -> p.instrument == "MAG", param)
++		filter(p -> p.unit == "cm^-3", param)
++		filter(p -> occursin(r"density"i, p.parameter), param)
++		filter(p -> occursin(r"periapsis"i, p.note), param)
++		filter(p -> p.instrument == "STATIC" && occursin(r"temperature"i, p.parameter), param)
++	Once the related coloumn number "n" is identified, one can access the data through data[:fields][:, n].
+ """
+ function read_mvn_kp(
+ 	date_str::String; 
+ 	data_root::String = "E:/Data/MAVEN"
+ )
+ 	folder = "$data_root/KP/insitu/$(date_str[1:4])/$(date_str[5:6])/"
+     file = glob("*$date_str*.tab", folder)
+ 
+ 	if isempty(file)
+-		error("No matching file found: folder=$folder, pattern=*$coordinate$resolution*_*$date_str*.sts")
++		error("No matching file found: folder=$folder, pattern=*$date_str*.tab")
+ 	elseif length(file) > 1
+ 		@warn "Multiple files matched, using the first one" folder=folder matched=file
+ 	end
+ 
+ 	file = file[1]
+ 	lines = readlines(file)
+ 
+     data_start_line = parse(Int, match(r"(\d+)\s+Line on which data begins",
+         lines[findfirst(l -> occursin("Line on which data begins", l), lines)])[1]
+ 	)
+     tbl_start = findfirst(l -> startswith(l, "# PARAMETER"), lines) + 2
+     tbl_end = findlast(l -> startswith(l, "#") && isempty(strip(l[2:end])), lines) - 2
+ 
+-    param = DataFrame(
+-        parameter   = strip.(SubString.(lines[tbl_start:tbl_end], 2, 60)),
+-        instrument  = strip.(SubString.(lines[tbl_start:tbl_end], 61, 72)),
+-        unit        = strip.(SubString.(lines[tbl_start:tbl_end], 73, 90)),
+-        column      = strip.(SubString.(lines[tbl_start:tbl_end], 91, 100)),
+-        format      = strip.(SubString.(lines[tbl_start:tbl_end], 101, 122)),
+-        note        = strip.(SubString.(lines[tbl_start:tbl_end], 123, 270))
+-    )
+-
+-	data = identity.(DataFrame(readdlm(IOBuffer(join(lines[data_start_line:end], "\n"))), :auto))
+-	transform!(data,
+-	    :x1 => ByRow(time -> DateTime(time, "yyyy-mm-ddTHH:MM:SS")) => :x1)
+-	transform!(data,
+-	    :x1 => ByRow(time -> datetime2julian(time)) => :julian)
+-
+-    return param, data
++	# param：由 DataFrame 改为 NamedTuple 向量，filter 用法保持不变（按字段名访问）
++	param = [
++		(
++			parameter  = strip(lines[k][2:60]),
++			instrument = strip(lines[k][61:72]),
++			unit       = strip(lines[k][73:90]),
++			column     = strip(lines[k][91:100]),
++			format     = strip(lines[k][101:122]),
++			note       = strip(lines[k][123:270]),
++		) for k in tbl_start:tbl_end
++	]
++
++	raw = readdlm(IOBuffer(join(lines[data_start_line:end], "\n")), :auto)
++	epoch = [DateTime(String(raw[i, 1]), "yyyy-mm-ddTHH:MM:SS") for i in 1:size(raw, 1)]
++	julian = datetime2julian.(epoch)
++
++	# data：由 DataFrame 改为 Dict，:fields 保留整块数值矩阵，以便按绝对列号访问：data[:fields][j, 227:235]
++	data = Dict{Symbol, Any}(
++		:epoch  => epoch,
++		:julian => julian,
++		:fields => raw,
++		:ncol   => size(raw, 2),
++	)
++
++    return param, data
+ end
+
+@@
+ function read_mvn_swia_coarsesvy3d(
+ 	date_str::String,
+-	kp::DataFrame;
++	kp::Dict{Symbol, Any};          # 由 DataFrame 改为 Dict
+ 	data_root::String = "E:/Data/MAVEN"
+ )
+@@
+ 	] # from swia to spacecraft (sc) transformation matrix
+-	mso_from_sc = let j = Ref(1), m = size(kp, 1)
++	mso_from_sc = let j = Ref(1), m = size(kp[:fields], 1)
+ 		map(epoch) do t
+-			while j[] < m && abs(kp[j[]+1, 1] - t) <= abs(kp[j[], 1] - t)
++			while j[] < m && abs(kp[:fields][j[]+1, 1] - t) <= abs(kp[:fields][j[], 1] - t)
+ 				j[] += 1
+ 			end
+-			transpose(reshape(Array(kp[j[], 227:235]), 3, 3)) .|> Float32
++			transpose(reshape(Array(kp[:fields][j[], 227:235]), 3, 3)) .|> Float32
+ 		end
+ 	end # from sc to mso transformation matrix
+*** End Patch
