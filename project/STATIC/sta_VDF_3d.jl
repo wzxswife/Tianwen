@@ -17,8 +17,8 @@ datestr = Dates.format.(date, "yyyymmdd")
 year_num = Dates.format(date, "yyyy")
 month_num = Dates.format(date, "mm")
 
-ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(26)
-te = ts + Dates.Minute(1)
+ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(27)
+te = ts + Dates.Minute(3)
 
 data_dir = "E:\\Data"
 output_dir = "E:\\Output"

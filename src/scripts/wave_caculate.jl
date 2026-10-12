@@ -65,7 +65,7 @@ function xyz_to_new_basis(point::Matrix{Float64}, basis_vectors::AbstractVector{
 end
 # 计算两个向量之间的夹角（单位：度）
 function angle_between(v1, v2)
-    cosθ = dot(v1, v2) / (norm(v1) * norm(v2))
+    cosθ = LinearAlgebra.dot(v1, v2) / (LinearAlgebra.norm(v1) * LinearAlgebra.norm(v2))
     return acosd(clamp(cosθ, -1.0, 1.0))  # 限制范围防止数值误差
 end
 

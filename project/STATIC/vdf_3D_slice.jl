@@ -169,50 +169,6 @@ function MVN_STATIC_eflux_interp(v3)
 end
 
 # ═══════════════════════════════════════════════════════
-#  任意斜面截面插值函数
-#  plane_origin: 平面上的一点 (3D向量, MFA坐标)
-#  plane_normal: 平面法向量 (3D向量, 会被归一化)
-#  range_s, range_t: 截面两个方向的范围 (km/s)
-#  n_s, n_t: 两个方向的采样点数
-#  返回: (grid_s, grid_t, eflux_2d)
-#    grid_s, grid_t: 2D网格坐标 (用于绘图)
-#    eflux_2d: 2D截面数据 (n_s × n_t)
-# ═══════════════════════════════════════════════════════
-function slice_plane_interp(plane_origin, plane_normal;
-        range_s = (-1000.0, 1000.0), range_t = (-1000.0, 1000.0),
-        n_s = 200, n_t = 200)
-
-    # 归一化法向量
-    n = plane_normal ./ norm(plane_normal)
-
-    # 构建平面内正交基 (Gram-Schmidt)
-    # 选一个不平行于n的辅助向量
-    if abs(n[1]) < 0.9
-        aux = [1.0, 0.0, 0.0]
-    else
-        aux = [0.0, 1.0, 0.0]
-    end
-    u = cross(aux, n)
-    u = u ./ norm(u)
-    v = cross(n, u)  # v = n × u, 保证右手系
-
-    # 2D网格
-    s_vals = collect(range(range_s[1], range_s[2], length = n_s))
-    t_vals = collect(range(range_t[1], range_t[2], length = n_t))
-
-    # 插值
-    eflux_2d = Array{Float64, 2}(undef, n_s, n_t)
-    @batch for it in 1:n_t
-        for is in 1:n_s
-            v3 = plane_origin .+ s_vals[is] .* u .+ t_vals[it] .* v
-            eflux_2d[is, it] = MVN_STATIC_eflux_interp(v3)
-        end
-    end
-
-    return s_vals, t_vals, eflux_2d, u, v
-end
-
-# ═══════════════════════════════════════════════════════
 #  3D直角网格插值 (与vdf_3D.jl相同)
 # ═══════════════════════════════════════════════════════
 vpara = collect(range(-1000.0, 1000.0, step = 10.0))
@@ -238,8 +194,8 @@ function MVA(b::AbstractMatrix)
     return eigen(muv)
 end
 
-shock_time = DateTime(2022, 8, 24, 7, 27, 0)
-shock_window = Second(10)
+shock_time = DateTime(2022, 8, 24, 7, 27, 20)
+shock_window = Second(30)
 t_shock_start = shock_time - shock_window
 t_shock_end = shock_time + shock_window
 
@@ -251,7 +207,7 @@ n_shock_mso = eig_shock.vectors[:, 1]
 if n_shock_mso[1] < 0
     n_shock_mso = -n_shock_mso
 end
-n_shock_mfa = MVN_static2mfa * n_shock_mso
+n_shock_mfa = MVN_static2mfa * MVN_static2msomean' * n_shock_mso
 
 # 太阳风速度 (MFA坐标)
 MVN_vsw_mfa = MVN_static2mfa * MVN_staticvswrough
@@ -266,23 +222,6 @@ println("Eigenvalues: $(round.(eig_shock.values, digits=2))")
 println("Solar wind (MFA): $(round.(MVN_vsw_mfa, digits=1))")
 println("Reflected (MFA): $(round.(v_reflected, digits=1))")
 
-# ═══════════════════════════════════════════════════════
-#  截面定义: 太阳风与反射方向所在平面
-# ═══════════════════════════════════════════════════════
-# 截面法向 = 太阳风 × 反射方向 (垂直于入射-反射平面)
-plane_origin = [0.0, 0.0, 0.0]
-plane_normal = normalize(cross(MVN_vsw_mfa, v_reflected))
-
-println("Computing oblique slice...")
-println("  Plane normal (MFA): $(round.(plane_normal, digits=3))")
-s_vals, t_vals, eflux_slice, u_vec, v_vec = slice_plane_interp(
-    plane_origin, plane_normal;
-    range_s = (-1000.0, 1000.0), range_t = (-1000.0, 1000.0),
-    n_s = 200, n_t = 200)
-
-println("  Slice shape: $(size(eflux_slice))")
-finite_count = count(isfinite, eflux_slice)
-println("  Finite values: $finite_count / $(length(eflux_slice))")
 
 # ═══════════════════════════════════════════════════════
 #  绘图: 左=3D体渲染 + 截面, 右=2D截面展开图
@@ -323,20 +262,6 @@ end
 border_s = vcat(range(-1000, 1000, length=50), fill(1000.0, 50), range(1000, -1000, length=50), fill(-1000.0, 50))
 border_t = vcat(fill(-1000.0, 50), range(-1000, 1000, length=50))  # 简化: 画边框线
 
-# 在3D场景中插入截面 (用 heatmap surface)
-# 把截面数据转为 surface! 可用的格式
-# surface! 需要 x, y, z 三个2D数组 + color 2D数组
-n_s, n_t = size(eflux_slice)
-xs = zeros(n_s, n_t)
-ys = zeros(n_s, n_t)
-zs = zeros(n_s, n_t)
-for it in 1:n_t, is in 1:n_s
-    pt = plane_origin .+ s_vals[is] .* u_vec .+ t_vals[it] .* v_vec
-    xs[is, it] = pt[1]  # perp1
-    ys[is, it] = pt[2]  # para
-    zs[is, it] = pt[3]  # perp2
-end
-
 # 截面边框线 (在3D场景中可视化截面位置)
 # 构建截面4条边的3D坐标
 function make_plane_corners(origin, u, v, s_range, t_range)
@@ -352,9 +277,6 @@ function make_plane_corners(origin, u, v, s_range, t_range)
     return [Point3f(c...) for c in corners]
 end
 
-plane_corners = make_plane_corners(plane_origin, u_vec, v_vec, (-1000, 1000), (-1000, 1000))
-lines!(ls1, plane_corners, color = :cyan, linewidth = 1.5, linestyle = :dash)
-
 # 太阳风速度方向箭头 (MFA坐标, 固定长度600 km/s)
 MVN_vsw_mfa = MVN_static2mfa * MVN_staticvswrough  # 静态坐标→MFA坐标
 vsw_dir = MVN_vsw_mfa ./ norm(MVN_vsw_mfa)
@@ -365,14 +287,14 @@ linesegments!(ls1, [ps_vsw, pe_vsw], color = :red, linewidth = 8, overdraw = tru
 arrows3d!(ls1, ps_vsw, pe_vsw, argmode = :endpoint,
     color = :red, shaftradius = 0.1, tipradius = 0.2, tailradius = 0.06, overdraw = true)
 
-# # 反射方向箭头 (橙色, 固定长度600 km/s)
-# ref_dir = v_reflected ./ norm(v_reflected)
-# ref_arrow_len = 600.0  # 固定箭头长度 (km/s)
-# ps_ref = Point3f(0.0, 0.0, 0.0)
-# pe_ref = Point3f(ref_dir .* ref_arrow_len...)
-# linesegments!(ls1, [ps_ref, pe_ref], color = :orange, linewidth = 6, overdraw = true)
-# arrows3d!(ls1, ps_ref, pe_ref, argmode = :endpoint,
-#     color = :orange, shaftradius = 0.08, tipradius = 0.15, tailradius = 0.05, overdraw = true)
+# 反射方向箭头 (橙色, 固定长度600 km/s)
+ref_dir = v_reflected ./ norm(v_reflected)
+ref_arrow_len = 600.0  # 固定箭头长度 (km/s)
+ps_ref = Point3f(0.0, 0.0, 0.0)
+pe_ref = Point3f(ref_dir .* ref_arrow_len...)
+linesegments!(ls1, [ps_ref, pe_ref], color = :orange, linewidth = 6, overdraw = true)
+arrows3d!(ls1, ps_ref, pe_ref, argmode = :endpoint,
+    color = :orange, shaftradius = 0.08, tipradius = 0.15, tailradius = 0.05, overdraw = true)
 
 # # 激波法向箭头 (白色)
 # ps_shock = Point3f(0.0, 0.0, 0.0)

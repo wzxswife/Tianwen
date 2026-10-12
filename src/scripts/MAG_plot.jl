@@ -81,7 +81,7 @@ function MVA(magbc::AbstractMatrix)
     local nb = size(magbc, 1)
     local bm = mean(magbc, dims=1)
     local muv = magbc' * magbc ./ nb - bm' * bm
-    return eigen(muv)
+    return LinearAlgebra.eigen(muv)
 end
 
 """

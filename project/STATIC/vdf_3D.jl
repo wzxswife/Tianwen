@@ -29,7 +29,7 @@ year_num = Dates.format(date, "yyyy")
 month_num = Dates.format(date, "mm")
 
 ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(26)
-te = ts + Dates.Minute(1)
+te = ts + Dates.Minute(3)
 
 data_dir = "E:\\Data"
 output_dir = "E:\\Output"
@@ -83,6 +83,8 @@ MVN_staticind = ThreadsX.findall(ts .<= MVN_statictime .<= te)
 MVN_staticswpind = MVN_staticswp[MVN_staticind[1]]
 MVN_staticefluxmean = dropdims(mean(MVN_staticeflux[MVN_staticind, :, :, :], dims = (1, ) ), dims=(1, ))
 MVN_staticpsdmean = ustrip(u"cm^-3 * km^-3 * s^3", 0.5 * 1u"cm^-2 * s^-1" * (m_p/1u"eV")^2)  .* MVN_staticefluxmean .* (MVN_staticmass[:,:,:,MVN_staticswpind,1]./ MVN_staticenergy[:,:,:,MVN_staticswpind,1]).^2
+
+# ===========================四分位数=======================================
 size(MVN_staticefluxmean)
 size(MVN_staticmass[:,:,:,MVN_staticswpind,1])
 size(MVN_staticenergy[:,:,:,MVN_staticswpind,1])
@@ -111,24 +113,26 @@ MVN_staticphigridH = vcat(MVN_staticphigridH, MVN_staticphigridH[begin]+360.0)
 MVN_staticthetau = 90.0.-[MVN_statictheta[1, i, 7, MVN_staticswpind, 1]-MVN_staticdtheta[1, i, 7, MVN_staticswpind, 1]*0.5 for i in 1:4]
 MVN_staticthetal = 90.0.-[MVN_statictheta[1, i, 7, MVN_staticswpind, 1]+MVN_staticdtheta[1, i, 7, MVN_staticswpind, 1]*0.5 for i in 1:4]
 MVN_staticthetagridH = vcat(MVN_staticthetal, MVN_staticthetau[end])
+# ===============================================================================
 MVN_staticindmean = round(Int64, mean(MVN_staticind))
 MVN_statictimemean = MVN_statictime[MVN_staticindmean]
 MVN_staticjulianmean = MVN_staticjulian[MVN_staticindmean]
 MVN_static2msomean = QuatRotation(MVN_staticquat_mso[MVN_staticindmean, :]) # STATIC instrument to MSO transformation matrix at mean time
 MVN_Bmeanstatic = MVN_static2msomean' * MVN_Bmeanmso #magnetic field in STATIC coordinates at mean time
 MVN_parastatic = MVN_Bmeanstatic ./ norm(MVN_Bmeanstatic) #unit vector of magnetic field in STATIC coordinates at mean time
-i, j =2, 14
-ind = argmax(MVN_staticefluxmean[1, (j-1)*4+i, :] ./ MVN_staticenergy[1, 1, :, MVN_staticswpind, 1].^2)
 
-MVN_staticvswrough = CartesianFromSpherical()
-    (CoordinateTransformations.Spherical(MVN_staticvelocity[1, (j-1)*4+i, ind, MVN_staticswpind, 1], 
-    deg2rad(MVN_staticphi[1, (j-1)*4+i, ind, MVN_staticswpind, 1]), 
-    deg2rad(MVN_statictheta[1, (j-1)*4+i, ind, MVN_staticswpind, 1])))
+# ====================太阳风方向==========================
+swi, swj =2, 14
+ind = argmax(MVN_staticefluxmean[1, (swj-1)*4+swi, :] ./ MVN_staticenergy[1, 1, :, MVN_staticswpind, 1].^2)
+MVN_staticvswrough = CartesianFromSpherical()(
+    CoordinateTransformations.Spherical(MVN_staticvelocity[1, (swj-1)*4+swi, ind, MVN_staticswpind, 1], 
+    deg2rad(MVN_staticphi[1, (swj-1)*4+swi, ind, MVN_staticswpind, 1]), 
+    deg2rad(MVN_statictheta[1, (swj-1)*4+swi, ind, MVN_staticswpind, 1])))
 MVN_staticdirections = [CartesianFromSpherical()(CoordinateTransformations.Spherical(1.0, deg2rad(MVN_staticphi[1, ij, ind, MVN_staticswpind, 1]), deg2rad(MVN_statictheta[1, ij, ind, MVN_staticswpind, 1]))) for ij in 1:64] #direction unit vectors
 MVN_staticss = [] #interpolation splines
 Snan = SphericalSplines.InterpolationSpline(stack(MVN_staticdirections; dims=1), fill(-30.0, 64))
 for k in 1:32
-    ind = findall(MVN_staticefluxmean[1, :, k] .> 0.0)
+    local ind = findall(MVN_staticefluxmean[1, :, k] .> 0.0)
     if !isempty(ind)
         S = SphericalSplines.InterpolationSpline(stack(MVN_staticdirections[ind]; dims=1), log10.(MVN_staticefluxmean[1, ind, k]))
         push!(MVN_staticss, S)

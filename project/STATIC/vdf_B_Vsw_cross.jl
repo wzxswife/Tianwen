@@ -42,16 +42,16 @@ using .SphericalSplines
 
 # --- 时间范围 ---
 date = Date(2022, 8, 24)
-ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(26)
+ts = DateTime(date) + Dates.Hour(7) + Dates.Minute(27)
 te = ts + Dates.Minute(3)
 # --- 指定绘图时间点 (HH:MM:SS 格式), 留空则绘制全部帧 ---
 plot_times = [
-    "07:26:00",
-    "07:26:30",
-    "07:27:00",
-    "07:27:30",
+    "07:27:20",
+    "07:27:40",
     "07:28:00",
-    "07:28:30",
+    "07:28:20",
+    "07:28:40",
+    "07:29:00",
 ]
 
 # --- 太阳风速度估算参数 (eflux/E² 峰值搜寻 bin) ---
@@ -297,7 +297,7 @@ fig_name = "MAVEN_STATIC_H+_VDF_MVA_xz_yz_frame_" *
 crange = (flux_threshold, 1e9)
 ticks = [-1000, -500, 0, 500, 1000]
 
-fig = Figure(resolution = (400 * n_selected, 800), fontsize = 12)
+fig = Figure(resolution = (400 * n_selected, 1200), fontsize = 12)
 
 for (col, fi) in enumerate(selected_fi)
     proj_fi = proj_frames[fi]
@@ -313,8 +313,8 @@ for (col, fi) in enumerate(selected_fi)
 
     # ---- xz 平面 (第1行) ----
     ax_xz = Axis(fig[1, col],
-        xlabel = col == 1 ? L"$\hat{B}$ (km/s)" : "",
-        ylabel = L"$\hat{B} \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)",
+        xlabel = col == 1 ? L"$v \cdot \hat{B}$ (km/s)" : "",
+        ylabel = L"$v \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)",
         title = time_labels[fi],
         xticks = ticks, yticks = ticks)
     xlims!(ax_xz, plot_range[1], plot_range[2])
@@ -339,8 +339,8 @@ for (col, fi) in enumerate(selected_fi)
         (proj_fi[:, 3] .> plot_range[1]) .& (proj_fi[:, 3] .< plot_range[2])
 
     ax_yz = Axis(fig[2, col],
-        xlabel = L"$\hat{B} \cdot \hat{V}_{\mathrm{sw}}$ (km/s)",
-        ylabel = col == 1 ? L"$\hat{B} \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)" : "",
+        xlabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)",
+        ylabel = col == 1 ? L"$v \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)" : "",
         xticks = ticks, yticks = ticks)
     xlims!(ax_yz, plot_range[1], plot_range[2])
     ylims!(ax_yz, plot_range[1], plot_range[2])
@@ -357,9 +357,28 @@ for (col, fi) in enumerate(selected_fi)
                     [-L*shock_yz_dir[2], L*shock_yz_dir[2]],
                     color=:black, linestyle=:dash, linewidth=2)
     end
+
+    # ---- xy 平面 (第3行) ----
+    f_keep_xy = (eflux_fi .> flux_threshold) .& e_keep .&
+        (proj_fi[:, 1] .> plot_range[1]) .& (proj_fi[:, 1] .< plot_range[2]) .&
+        (proj_fi[:, 2] .> plot_range[1]) .& (proj_fi[:, 2] .< plot_range[2])
+
+    ax_xy = Axis(fig[3, col],
+        xlabel = col == 1 ? L"$v \cdot \hat{B}$ (km/s)" : "",
+        ylabel = col == 1 ? L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)" : "",
+        xticks = ticks, yticks = ticks)
+    xlims!(ax_xy, plot_range[1], plot_range[2])
+    ylims!(ax_xy, plot_range[1], plot_range[2])
+    hlines!(ax_xy, 0, color = :white, linestyle = :dash)
+    vlines!(ax_xy, 0, color = :white, linestyle = :dash)
+    if count(f_keep_xy) > 0
+        scatter!(ax_xy, proj_fi[f_keep_xy, 1], proj_fi[f_keep_xy, 2];
+            color = eflux_fi[f_keep_xy], colormap = :gist_earth, colorscale = log10,
+            colorrange = crange, markersize = 4)
+    end
 end
 
-Colorbar(fig[1:2, n_selected+1], limits = crange, colormap = :gist_earth, scale = log10,
+Colorbar(fig[1:3, n_selected+1], limits = crange, colormap = :gist_earth, scale = log10,
     label = L"H$^{+}$ Differential Energy Flux (eV/cm²/s/sr/eV)")
 
 save(joinpath(VDF_path, fig_name), fig)
@@ -397,9 +416,12 @@ function build_vdf_grid_bvsw(splines, v_ch; n_grid=80, plot_range=(-1000, 1000),
         if plane == "xz"
             dir_mso[1] = v1   # v·B̂
             dir_mso[3] = v2   # v·(B̂×(B̂×V̂sw))
-        else  # "yz"
+        elseif plane == "yz"
             dir_mso[2] = v1   # v·(B̂×V̂sw)
             dir_mso[3] = v2   # v·(B̂×(B̂×V̂sw))
+        else  # "xy"
+            dir_mso[1] = v1   # v·B̂
+            dir_mso[2] = v2   # v·(B̂×V̂sw)
         end
 
         speed_pt = norm(dir_mso)
@@ -490,7 +512,7 @@ println("逐帧球面样条插值生成热力图...")
 
 # 先对每个选中帧计算网格, 并收集全局颜色范围 (便于帧间对比)
 all_valid = Float64[]
-frame_grids = Vector{Tuple{Vector{Float64},Matrix{Float64},Vector{Float64},Matrix{Float64}}}(undef, n_selected)
+frame_grids = Vector{Tuple{Vector{Float64},Matrix{Float64},Vector{Float64},Matrix{Float64},Vector{Float64},Matrix{Float64}}}(undef, n_selected)
 for (col, fi) in enumerate(selected_fi)
     t_idx = MVN_staticind[fi]
     splines_f, v_ch_f = build_frame_splines(t_idx)
@@ -498,9 +520,12 @@ for (col, fi) in enumerate(selected_fi)
         plot_range=plot_range, plane="xz", e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
     yzc, yzg = build_vdf_grid_bvsw(splines_f, v_ch_f; n_grid=heatmap_nbin,
         plot_range=plot_range, plane="yz", e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
-    frame_grids[col] = (xzc, xzg, yzc, yzg)
+    xyc, xyg = build_vdf_grid_bvsw(splines_f, v_ch_f; n_grid=heatmap_nbin,
+        plot_range=plot_range, plane="xy", e_x_mso=e_x_mso, e_y_mso=e_y_mso, e_z_mso=e_z_mso)
+    frame_grids[col] = (xzc, xzg, yzc, yzg, xyc, xyg)
     append!(all_valid, filter(isfinite, vec(xzg)))
     append!(all_valid, filter(isfinite, vec(yzg)))
+    append!(all_valid, filter(isfinite, vec(xyg)))
 end
 
 if length(all_valid) > 10
@@ -510,6 +535,12 @@ else
     cr_log = (6.0, 8.0)  # fallback
 end
 
+# ---- 太阳风方向 V̂sw 在 MVA 基 (B̂, B̂×V̂sw, B̂×(B̂×V̂sw)) 下的分量 ----
+vsw_hat = MVN_staticvswrough ./ norm(MVN_staticvswrough)   # V̂sw (STATIC 系)
+vsw_x = dot(vsw_hat, e_x)   # V̂sw · B̂
+vsw_y = dot(vsw_hat, e_y)   # V̂sw · (B̂×V̂sw)
+vsw_z = dot(vsw_hat, e_z)   # V̂sw · (B̂×(B̂×V̂sw))
+
 ticks = [-1000, -500, 0, 500, 1000]
 title_heat = "MAVEN STATIC H⁺ VDF $(datestr) $(Dates.format(ts,"HH:MM:SS"))-$(Dates.format(te,"HH:MM:SS")) (MVA) per-frame spline"
 colorbar_label = L"$\log_{10}$ Differential Energy Flux (eV/cm$^2$/s/sr/eV)"
@@ -518,10 +549,10 @@ fig_heat_name = "MAVEN_STATIC_H+_VDF_MVA_xz_yz_heatmap_frame_" *
     Dates.format(ts, "yyyymmddTHHMM") * "-" *
     Dates.format(te, "HHMM") * ".pdf"
 
-fig2 = Figure(resolution = (600 * n_selected + 80, 1100), fontsize = 12)
+fig2 = Figure(resolution = (600 * n_selected + 80, 1600), fontsize = 12)
 
 for (col, fi) in enumerate(selected_fi)
-    xzc, xzg, yzc, yzg = frame_grids[col]
+    xzc, xzg, yzc, yzg, xyc, xyg = frame_grids[col]
 
     # ---- xz 平面热力图 (第1行: 该时间点) ----
     ax_xz = Axis(fig2[1, col], aspect = 1, yticks = ticks, xticks = ticks,
@@ -532,7 +563,7 @@ for (col, fi) in enumerate(selected_fi)
     hlines!(ax_xz, 0, linestyle = :dash, color = :white)
     vlines!(ax_xz, 0, linestyle = :dash, color = :white)
     ax_xz.xlabel = col == 1 ? L"$v \cdot \hat{B}$ (km/s)" : ""
-    ax_xz.ylabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)"
+    ax_xz.ylabel = L"$v \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)"
 
     # 激波面方向 (黑色虚线)
     if norm(shock_xz_dir) > 1e-10
@@ -541,6 +572,10 @@ for (col, fi) in enumerate(selected_fi)
                     [-Lz*shock_xz_dir[2], Lz*shock_xz_dir[2]],
                     color=:black, linestyle=:dash, linewidth=2)
     end
+    # # 太阳风方向 V̂sw (绿色实线) — 投影到 xz 平面: (vsw_x, vsw_z)
+    # Lv = Float64(plot_range[2]) * 0.9
+    # lines!(ax_xz, [-Lv*vsw_x, Lv*vsw_x], [-Lv*vsw_z, Lv*vsw_z],
+    #     color = :green, linewidth = 2)
 
     # ---- yz 平面热力图 (第2行: 该时间点) ----
     ax_yz = Axis(fig2[2, col], aspect = 1, yticks = ticks, xticks = ticks,
@@ -549,8 +584,8 @@ for (col, fi) in enumerate(selected_fi)
         colorrange = cr_log, nan_color = :transparent)
     hlines!(ax_yz, 0, linestyle = :dash, color = :white)
     vlines!(ax_yz, 0, linestyle = :dash, color = :white)
-    ax_yz.xlabel = L"$v \cdot \hat{V}_{\mathrm{sw}}$ (km/s)"
-    ax_yz.ylabel = col == 1 ? L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)" : ""
+    ax_yz.xlabel = L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)"
+    ax_yz.ylabel = col == 1 ? L"$v \cdot (\hat{B} \times (\hat{B} \times \hat{V}_{\mathrm{sw}}))$ (km/s)" : ""
 
     # 激波面方向 (黑色虚线)
     if norm(shock_yz_dir) > 1e-10
@@ -559,9 +594,22 @@ for (col, fi) in enumerate(selected_fi)
                     [-Lz*shock_yz_dir[2], Lz*shock_yz_dir[2]],
                     color=:black, linestyle=:dash, linewidth=2)
     end
+    # # 太阳风方向 V̂sw (绿色实线) — 投影到 yz 平面: (vsw_y, vsw_z)
+    # lines!(ax_yz, [-Lv*vsw_y, Lv*vsw_y], [-Lv*vsw_z, Lv*vsw_z],
+    #     color = :green, linewidth = 2)
+
+    # ---- xy 平面热力图 (第3行: 该时间点) ----
+    ax_xy = Axis(fig2[3, col], aspect = 1, yticks = ticks, xticks = ticks,
+        limits = (plot_range, plot_range), alignmode = Inside())
+    heatmap!(ax_xy, xyc, xyc, xyg; colormap = :viridis,
+        colorrange = cr_log, nan_color = :transparent)
+    hlines!(ax_xy, 0, linestyle = :dash, color = :white)
+    vlines!(ax_xy, 0, linestyle = :dash, color = :white)
+    ax_xy.xlabel = col == 1 ? L"$v \cdot \hat{B}$ (km/s)" : ""
+    ax_xy.ylabel = col == 1 ? L"$v \cdot (\hat{B} \times \hat{V}_{\mathrm{sw}})$ (km/s)" : ""
 end
 
-Colorbar(fig2[1:2, n_selected+1], limits = cr_log, colormap = :viridis,
+Colorbar(fig2[1:3, n_selected+1], limits = cr_log, colormap = :viridis,
     label = colorbar_label)
 Label(fig2[0, :], title_heat, fontsize = 18, tellwidth = false)
 
