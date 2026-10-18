@@ -1,30 +1,25 @@
-*** Begin Patch
-*** Update File: src/scripts/MVN3DIonDisttribution.jl
-@@ using DelimitedFiles
+diff --git a/src/scripts/MVN3DIonDisttribution.jl b/src/scripts/MVN3DIonDisttribution.jl
+index ec8a4d8..8ff9cea 100644
+--- a/src/scripts/MVN3DIonDisttribution.jl
++++ b/src/scripts/MVN3DIonDisttribution.jl
+@@ -5,7 +5,6 @@ using Glob
+ # Reading File
+ using CDFDatasets
  using DelimitedFiles
 -using DataFrames
  # Stucturing Data
+ using Dates
+ using Unitful
+@@ -61,7 +60,7 @@ unitvec(v::AbstractVector{<:AbstractFloat}) = v ./ norm(v)
+ 	coordinate::"ss" for MSO coordinate system，and "pc" for geographic coordinate system
+ 	resolution::"1s" for data with 1 Hz sampling rate, and "" for data with 64 Hz samping rate
  
-@@
 -	The data included magetic field components and spacecraft positions are exported into a DataFrame.
 +	The data included magetic field components and spacecraft positions are exported into a Dict{Symbol, Any}.
  """
  function read_mvn_mag(
  	date_str::String;
- 	data_root::String = "E:/Data", 
- 	coordinate::String = "ss", # or "pc"
- 	resolution::String = "1s",  # or "" representing data with 64 Hz samping rate
- 	Rm = ustrip(u"km", R_Mars)  # Mars' radius in units of km
- )
- 	folder = "$(data_root)/MAG/l2/$(date_str[1:4])/$(date_str[5:6])/"	
- 	file = glob("*$coordinate$resolution*_*$date_str*.sts", folder)
- 	
- 	if isempty(file)
- 		error("No matching file found: folder=$folder, pattern=*$coordinate$resolution*_*$date_str*.sts")
- 	elseif length(file) > 1
- 		@warn "Multiple files matched, using the first one" folder=folder matched=file
- 	end
- 
+@@ -82,38 +81,52 @@ function read_mvn_mag(
  	file = file[1]
  	lines = readlines(file)
  	skip = findfirst(line -> occursin(r"^\s*\d{4}\s+\d{3}", line), lines)
@@ -32,20 +27,20 @@
 -	name = [:year,  :doy,  :hour,  :min,  :sec,  :msec,  :dddy,  :bx,  :by,  :bz,  :brange,  :px,  :py,  :pz,  :plbx,  :plby,  :plbz,  :plrange]
 -	rename!(data, name)
 -	transform!(data,
--	    [:year, :doy, :hour, :min, :sec, :msec] => ByRow(
--	        (y, d, h, m, s, ms) ->
--	            DateTime(y) + Day(d - 1) + Hour(h) +
--	            Minute(m) + Second(s) + Millisecond(ms)
--	    ) => :epoch)
+-    [:year, :doy, :hour, :min, :sec, :msec] => ByRow(
+-        (y, d, h, m, s, ms) ->
+-            DateTime(y) + Day(d - 1) + Hour(h) +
+-            Minute(m) + Second(s) + Millisecond(ms)
+-    ) => :epoch)
 -	transform!(data,
--	    :epoch => ByRow(time -> datetime2julian(time)) => :julian)
+-    :epoch => ByRow(time -> datetime2julian(time)) => :julian)
 -	transform!(data, [:px, :py, :pz] .=> (x -> x ./ Rm) .=> [:px, :py, :pz]) 
 -	transform!(data, [:px, :py, :pz] => ByRow((x, y, z) -> sqrt(x^2+y^2+z^2)) => :pr) 
 -	select!(data, :epoch, :julian, :bx, :by, :bz, :px, :py, :pz, :pr)
 -
 -	return data
 +	raw = readdlm(IOBuffer(join(lines[skip:end], "\n")), :auto)
-+	# 列序：year(1), doy(2), hour(3), min(4), sec(5), msec(6), dddy(7), bx(8), by(9), bz(10), brange(11), px(12), py(13), pz(14), ...
++	# 列序：year(1), doy(2), hour(3), min(4), sec(5), msec(6), dddy(7), bx(8), by(9), bz(10), brange(11), px(12), py(13), pz(14)
 +	epoch = [
 +		DateTime(Int(raw[i, 1])) + Day(Int(raw[i, 2]) - 1) + Hour(Int(raw[i, 3])) +
 +		Minute(Int(raw[i, 4])) + Second(Int(raw[i, 5])) + Millisecond(Int(raw[i, 6]))
@@ -77,8 +72,10 @@
 +		:data_load_flag => true,
 +	)
  end
-
-@@
+ 
+ """
+ 	Reading MVN KP data
+ 
 -	The parameters and data are exported as two DataFrames. Through searching the "param" DataFrame, 
 -	one can identify which colomun of "data" DataFrame contains the required data. For Example:
 -		filter(row -> row.instrument == "MAG", param)
@@ -102,9 +99,7 @@
  """
  function read_mvn_kp(
  	date_str::String; 
- 	data_root::String = "E:/Data/MAVEN"
- )
- 	folder = "$data_root/KP/insitu/$(date_str[1:4])/$(date_str[5:6])/"
+@@ -123,7 +136,7 @@ function read_mvn_kp(
      file = glob("*$date_str*.tab", folder)
  
  	if isempty(file)
@@ -113,13 +108,7 @@
  	elseif length(file) > 1
  		@warn "Multiple files matched, using the first one" folder=folder matched=file
  	end
- 
- 	file = file[1]
- 	lines = readlines(file)
- 
-     data_start_line = parse(Int, match(r"(\d+)\s+Line on which data begins",
-         lines[findfirst(l -> occursin("Line on which data begins", l), lines)])[1]
- 	)
+@@ -137,20 +150,29 @@ function read_mvn_kp(
      tbl_start = findfirst(l -> startswith(l, "# PARAMETER"), lines) + 2
      tbl_end = findlast(l -> startswith(l, "#") && isempty(strip(l[2:end])), lines) - 2
  
@@ -134,11 +123,9 @@
 -
 -	data = identity.(DataFrame(readdlm(IOBuffer(join(lines[data_start_line:end], "\n"))), :auto))
 -	transform!(data,
--	    :x1 => ByRow(time -> DateTime(time, "yyyy-mm-ddTHH:MM:SS")) => :x1)
+-    :x1 => ByRow(time -> DateTime(time, "yyyy-mm-ddTHH:MM:SS")) => :x1)
 -	transform!(data,
--	    :x1 => ByRow(time -> datetime2julian(time)) => :julian)
--
--    return param, data
+-    :x1 => ByRow(time -> datetime2julian(time)) => :julian)
 +	# param：由 DataFrame 改为 NamedTuple 向量，filter 用法保持不变（按字段名访问）
 +	param = [
 +		(
@@ -162,18 +149,21 @@
 +		:fields => raw,
 +		:ncol   => size(raw, 2),
 +	)
-+
-+    return param, data
+ 
+     return param, data
  end
-
-@@
+@@ -162,7 +184,7 @@ end
+ """
  function read_mvn_swia_coarsesvy3d(
  	date_str::String,
 -	kp::DataFrame;
 +	kp::Dict{Symbol, Any};          # 由 DataFrame 改为 Dict
  	data_root::String = "E:/Data/MAVEN"
  )
-@@
+ 	folder = "$data_root/SWIA/l2/$(date_str[1:4])/$(date_str[5:6])/"
+@@ -194,12 +216,12 @@ function read_mvn_swia_coarsesvy3d(
+ 					0.0f0  0.0f0 -1.0f0; 
+ 					1.0f0  0.0f0  0.0f0
  	] # from swia to spacecraft (sc) transformation matrix
 -	mso_from_sc = let j = Ref(1), m = size(kp, 1)
 +	mso_from_sc = let j = Ref(1), m = size(kp[:fields], 1)
@@ -186,4 +176,107 @@
 +			transpose(reshape(Array(kp[:fields][j[], 227:235]), 3, 3)) .|> Float32
  		end
  	end # from sc to mso transformation matrix
-*** End Patch
+ 	mso_from_swia = stack(mso_from_sc .* Ref(sc_from_swia))
+@@ -662,8 +684,8 @@ function plot_mvn_swia_eflux_profile(mvn_swia, mvn_mag, xd)
+ 
+ 	# magnetic field unit vector in SWIA coordinate
+ 	bvec = (mvn_mag 
+-		|> df -> subset(df, :epoch => ByRow(e -> xd[begin] ≤ e ≤ xd[end])) 
+-		|> df -> [mean(df.bx), mean(df.by), mean(df.bz)]
++		|> d -> findall(xd[begin] .≤ d[:epoch] .≤ xd[end])
++		|> ind -> (d = mvn_mag; [mean(d[:bx][ind]), mean(d[:by][ind]), mean(d[:bz][ind])])
+ 		|> v -> swia_from_mso * v
+ 		|> unitvec
+ 	)
+@@ -766,8 +788,8 @@ function interpolate_mvn_swia_eflux_3d(mvn_swia, mvn_mag, xd)
+ 
+ 	# magnetic field unit vector in SWIA coordinate
+ 	bvec = (mvn_mag 
+-		|> df -> subset(df, :epoch => ByRow(e -> xd[begin] ≤ e ≤ xd[end])) 
+-		|> df -> [mean(df.bx), mean(df.by), mean(df.bz)]
++		|> d -> findall(xd[begin] .≤ d[:epoch] .≤ xd[end])
++		|> ind -> (d = mvn_mag; [mean(d[:bx][ind]), mean(d[:by][ind]), mean(d[:bz][ind])])
+ 		|> v -> swia_from_mso * v
+ 		|> SVector{3, Float64}
+ 		|> unitvec
+@@ -1121,8 +1143,8 @@ function plot_mvn_static_eflux_profile(mvn_static, mvn_mag, xd, imass)
+ 
+ 	# magnetic field unit vector in static coordinate
+ 	bvec = (mvn_mag 
+-		|> df -> subset(df, :epoch => ByRow(e -> xd[begin] ≤ e ≤ xd[end])) 
+-		|> df -> [mean(df.bx), mean(df.by), mean(df.bz)]
++		|> d -> findall(xd[begin] .≤ d[:epoch] .≤ xd[end])
++		|> ind -> (d = mvn_mag; [mean(d[:bx][ind]), mean(d[:by][ind]), mean(d[:bz][ind])])
+ 		|> v -> static_from_mso * v
+ 		|> unitvec
+ 	)
+@@ -1229,8 +1251,8 @@ function interpolate_mvn_static_eflux_3d(mvn_static, mvn_mag, xd, imass)
+ 
+ 	# magnetic field unit vector in STATIC coordinate
+ 	bvec = (mvn_mag 
+-		|> df -> subset(df, :epoch => ByRow(e -> xd[begin] ≤ e ≤ xd[end])) 
+-		|> df -> [mean(df.bx), mean(df.by), mean(df.bz)]
++		|> d -> findall(xd[begin] .≤ d[:epoch] .≤ xd[end])
++		|> ind -> (d = mvn_mag; [mean(d[:bx][ind]), mean(d[:by][ind]), mean(d[:bz][ind])])
+ 		|> v -> static_from_mso * v
+ 		|> SVector{3, Float64}
+ 		|> unitvec
+@@ -1406,28 +1428,28 @@ function validate_moments(mvn_swia_ion_moments, mvn_static_ion_moments, mvn_kp,
+ 	#axes[4].ylabel = rich(rich("Bulk Velocity MSO Z (km⋅s"), superscript("-1"), rich(")"))
+ 	axes[5].ylabel = rich("Temperature (eV)")
+ 
+-	lines!(axes[1], mvn_kp.julian .- xst, mvn_kp[:, 2], linewidth = 2, color = lcn[1], label = "KP LPW e⁻")
+-	lines!(axes[1], mvn_kp.julian .- xst, mvn_kp[:, 23], linewidth = 2, color = lcn[2], label = "KP SWEA e⁻")
+-	lines!(axes[1], mvn_kp.julian .- xst, mvn_kp[:, 41], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
+-	lines!(axes[1], mvn_kp.julian .- xst, mvn_kp[:, 54], linewidth = 2, color = lcn[4], label = "KP STATIC H⁺")
++	lines!(axes[1], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 2], linewidth = 2, color = lcn[1], label = "KP LPW e⁻")
++	lines!(axes[1], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 23], linewidth = 2, color = lcn[2], label = "KP SWEA e⁻")
++	lines!(axes[1], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 41], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
++	lines!(axes[1], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 54], linewidth = 2, color = lcn[4], label = "KP STATIC H⁺")
+ 	lines!(axes[1], datetime2julian.(mvn_swia_ion_moments.epoch) .- xst, mvn_swia_ion_moments.density, linewidth = 2, color = lcn[5], label = "SWIA H⁺")
+ 	lines!(axes[1], datetime2julian.(mvn_static_ion_moments.epoch) .- xst, mvn_static_ion_moments.density, linewidth = 2, color = lcn[6], label = "STATIC H⁺")
+ 	axislegend(axes[1])
+ 
+-	lines!(axes[2], mvn_kp.julian .- xst, mvn_kp[:, 43], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
++	lines!(axes[2], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 43], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
+ 	lines!(axes[2], datetime2julian.(mvn_swia_ion_moments.epoch) .- xst, mvn_swia_ion_moments.bulkvelocity[1, :], linewidth = 2, color = lcn[5], label = "SWIA H⁺")
+ 	lines!(axes[2], datetime2julian.(mvn_static_ion_moments.epoch) .- xst, mvn_static_ion_moments.bulkvelocity[1, :], linewidth = 2, color = lcn[6], label = "STATIC H⁺")
+ 
+-	lines!(axes[3], mvn_kp.julian .- xst, mvn_kp[:, 45], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
++	lines!(axes[3], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 45], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
+ 	lines!(axes[3], datetime2julian.(mvn_swia_ion_moments.epoch) .- xst, mvn_swia_ion_moments.bulkvelocity[2, :], linewidth = 2, color = lcn[5], label = "SWIA H⁺")
+ 	lines!(axes[3], datetime2julian.(mvn_static_ion_moments.epoch) .- xst, mvn_static_ion_moments.bulkvelocity[2, :], linewidth = 2, color = lcn[6], label = "STATIC H⁺")
+ 
+-	lines!(axes[4], mvn_kp.julian .- xst, mvn_kp[:, 47], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
++	lines!(axes[4], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 47], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
+ 	lines!(axes[4], datetime2julian.(mvn_swia_ion_moments.epoch) .- xst, mvn_swia_ion_moments.bulkvelocity[3, :], linewidth = 2, color = lcn[5], label = "SWIA H⁺")
+ 	lines!(axes[4], datetime2julian.(mvn_static_ion_moments.epoch) .- xst, mvn_static_ion_moments.bulkvelocity[3, :], linewidth = 2, color = lcn[6], label = "STATIC H⁺")
+ 
+-	lines!(axes[5], mvn_kp.julian .- xst, mvn_kp[:, 49], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
+-	lines!(axes[5], mvn_kp.julian .- xst, mvn_kp[:, 60], linewidth = 2, color = lcn[4], label = "KP STATIC H⁺")
++	lines!(axes[5], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 49], linewidth = 2, color = lcn[3], label = "KP SWIA H⁺")
++	lines!(axes[5], mvn_kp[:julian] .- xst, mvn_kp[:fields][:, 60], linewidth = 2, color = lcn[4], label = "KP STATIC H⁺")
+ 	lines!(axes[5], datetime2julian.(mvn_swia_ion_moments.epoch) .- xst, mvn_swia_ion_moments.temperature, linewidth = 2, color = lcn[5], label = "SWIA H⁺")
+ 	lines!(axes[5], datetime2julian.(mvn_static_ion_moments.epoch) .- xst, mvn_static_ion_moments.temperature, linewidth = 2, color = lcn[6], label = "STATIC H⁺")
+ 
+@@ -1451,13 +1473,13 @@ end
+ # date_julian = datetime2julian(date)
+ 
+ # # Reading data
+-# mvn_mag = read_mvn_mag(date_str) # DataFrame
+-# mvn_kp_param, mvn_kp = read_mvn_kp(date_str) #(DataFrame, DataFrame)
+-# filter(row -> occursin(r"rotation"i, row.parameter) && occursin(r"spacecraft"i, row.parameter), mvn_kp_param)
+-# temp = filter(row -> occursin(r"shape"i, row.parameter), mvn_kp_param)
+-# filter(row -> occursin(r"density"i, row.parameter), mvn_kp_param)
+-# filter(row -> occursin(r"velocity"i, row.parameter), mvn_kp_param)
+-# filter(row -> occursin(r"temperature"i, row.parameter), mvn_kp_param)
++# mvn_mag = read_mvn_mag(date_str) # Dict{Symbol, Any}
++# mvn_kp_param, mvn_kp = read_mvn_kp(date_str) #(Vector{NamedTuple}, Dict{Symbol, Any})
++# filter(p -> occursin(r"rotation"i, p.parameter) && occursin(r"spacecraft"i, p.parameter), mvn_kp_param)
++# temp = filter(p -> occursin(r"shape"i, p.parameter), mvn_kp_param)
++# filter(p -> occursin(r"density"i, p.parameter), mvn_kp_param)
++# filter(p -> occursin(r"velocity"i, p.parameter), mvn_kp_param)
++# filter(p -> occursin(r"temperature"i, p.parameter), mvn_kp_param)
+ # mvn_swia = read_mvn_swia_coarsesvy3d(date_str, mvn_kp)
+ # mvn_static = read_mvn_static_32e4d16a8m(date_str) 
+ 

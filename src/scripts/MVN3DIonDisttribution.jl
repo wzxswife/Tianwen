@@ -1241,8 +1241,8 @@ function interpolate_mvn_static_eflux_3d(mvn_static, mvn_mag, xd, imass)
 
 	# interpolation
 	step = 10.0
-	vmax = 2000.0
-	vmin = -2000.0
+	vmax = 1000.0
+	vmin = -1000.0
 	vb = collect(range(vmin, vmax, step = step))
 	ve = collect(range(vmin, vmax, step = step))
 	vv = collect(range(vmin, vmax, step = step))
